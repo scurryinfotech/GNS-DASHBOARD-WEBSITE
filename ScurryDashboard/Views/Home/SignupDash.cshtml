@@ -1,0 +1,258 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@section styles {
+    <link rel="stylesheet" href="~/css/Signup.css" asp-append-version="true" />
+}
+
+<div style="align-items:center">
+    <div class="signup-container m-auto">
+        <div class="signup-header">
+            <h2>Create Account</h2>
+        </div>
+
+        <form method="post" action="/Home/Signup" id="signupForm">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" name="name" required placeholder="Enter your full name">
+                <div class="error-message" id="nameError">Please enter your full name</div>
+            </div>
+
+            <div class="form-group">
+                <label for="loginame">Email Address</label>
+                <input type="email" id="loginame" name="email" required placeholder="john.doe@example.com">
+                <div class="error-message" id="emailError">Please enter a valid email address</div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-wrapper">
+                    <input type="password" id="password" name="password" required placeholder="Create a strong password" minlength="8">
+                    <span class="password-toggle" data-target="password">👁️</span>
+                </div>
+                <div class="password-strength">
+                    <div class="strength-bar">
+                        <div class="strength-fill" id="strengthFill"></div>
+                    </div>
+                    <span id="strengthText">Password strength</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <div class="input-wrapper">
+                    <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Confirm your password">
+                    <span class="password-toggle" data-target="confirmPassword">👁️</span>
+                </div>
+                <div class="error-message" id="confirmPasswordError" style="display:none;">Passwords do not match</div>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="newsletter" name="newsletter">
+                <label for="newsletter">
+                    Send me updates and promotional emails (optional)
+                </label>
+            </div>
+
+            <button type="submit" class="signup-btn" id="signupBtn">Create Account</button>
+            
+        </form>
+        <p id="message" style="color: red; font-weight: bold;"></p>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    
+<!-- Add Toast CSS -->
+<link rel="stylesheet" href="~/css/Toast.css" />
+<!-- Add Toast JS -->
+<script src="~/js/Toast.js"></script>
+<script>
+    $(document).ready(function () {
+        // Password toggle functionality
+        $('.password-toggle').on('click', function () {
+            var targetId = $(this).data('target');
+            var $input = $('#' + targetId);
+            var type = $input.attr('type') === 'password' ? 'text' : 'password';
+            $input.attr('type', type);
+            $(this).text(type === 'password' ? '👁️' : '🙈');
+        });
+
+        // Password strength indicator
+        $('#password').on('input', function () {
+            var password = $(this).val();
+            var strength = 0;
+            if (password.length >= 8) strength++;
+            if (password.match(/[a-z]+/)) strength++;
+            if (password.match(/[A-Z]+/)) strength++;
+            if (password.match(/[0-9]+/)) strength++;
+            if (password.match(/[^a-zA-Z0-9]+/)) strength++;
+            var percentage = (strength / 5) * 100;
+            $('#strengthFill').css('width', percentage + '%');
+            if (strength <= 2) {
+                $('#strengthFill').css('background-color', '#ff4444');
+                $('#strengthText').text('Weak password');
+            } else if (strength <= 3) {
+                $('#strengthFill').css('background-color', '#ffa500');
+                $('#strengthText').text('Medium password');
+            } else {
+                $('#strengthFill').css('background-color', '#00c851');
+                $('#strengthText').text('Strong password');
+            }
+        });
+
+        // Confirm password validation
+             $('#confirmPassword').on('input', function () {
+                 var password = $('#password').val();
+                 var confirmPassword = $(this).val();
+                 if (confirmPassword && password !== confirmPassword) {
+                     $('#confirmPasswordError').show();
+                     $(this).addClass('error');
+                 } else {
+                     $('#confirmPasswordError').hide();
+                     $(this).removeClass('error');
+                 }
+             });
+
+        // Validation function
+         function validateField($field, errorId, errorMessage) {
+            if ($field.val().trim() === '') {
+                $field.addClass('error');
+                if (errorId) {
+                    $('#' + errorId).text(errorMessage).addClass('show');
+                }
+                return false;
+            } else {
+                $field.removeClass('error');
+                if (errorId) {
+                    $('#' + errorId).removeClass('show');
+                }
+                return true;
+            }
+         }
+
+        // Email validation function
+        function validateEmail($field) {
+            var emailPattern = new RegExp('^[^\\s@@]+@@[^\\s@@]+\\.[^\\s@@]+$');
+            var email = $field.val().trim();
+
+            if (email === '') {
+                $field.addClass('error');
+                $('#emailError').text('Please enter your email address').addClass('show');
+                return false;
+            } else if (!emailPattern.test(email)) {
+                $field.addClass('error');
+                $('#emailError').text('Please enter a valid email address').addClass('show');
+                return false;
+            } else {
+                $field.removeClass('error');
+                $('#emailError').removeClass('show');
+                return true;
+            }
+        }
+        // Validate on blur (when user leaves field)
+        $('#name').on('blur', function () {
+            validateField($(this), 'nameError', 'Please enter your full name');
+        });
+
+        $('#loginame').on('blur', function () {
+            validateEmail($(this));
+        });
+
+          $('#password').on('blur', function () {
+            validateField($(this), null, null);
+          });
+
+        $('#confirmPassword').on('blur', function () {
+            var password = $('#password').val();
+            var confirmPassword = $(this).val().trim();
+            
+            if (confirmPassword === '') {
+                $(this).addClass('error');
+                $('#confirmPasswordError').text('Please confirm your password').show();
+            } else if (password !== confirmPassword) {
+                $(this).addClass('error');
+                $('#confirmPasswordError').text('Passwords do not match').show();
+            } else {
+                $(this).removeClass('error');
+                $('#confirmPasswordError').hide();
+            }
+        });
+
+        // Remove error on input
+        $('#name, #loginame, #password, #confirmPassword').on('input', function () {
+            if ($(this).val().trim() !== '') {
+                $(this).removeClass('error');
+                var errorId = $(this).attr('id') + 'Error';
+                $('#' + errorId).removeClass('show');
+            }
+        });
+
+        // Form submission
+        $('#signupForm').on('submit', function (e) {
+            e.preventDefault();
+            
+            // Validate all fields
+            var isValid = true;
+            
+            if (!validateField($('#name'), 'nameError', 'Please enter your full name')) {
+                isValid = false;
+            }
+            
+            if (!validateEmail($('#loginame'))) {
+                isValid = false;
+            }
+            
+            if (!validateField($('#password'), null, null)) {
+                isValid = false;
+                Toast.error('Please enter a password', 'Validation Error');
+            }
+            
+            // Validate password match
+            var password = $('#password').val();
+            var confirmPassword = $('#confirmPassword').val();
+            
+            if (confirmPassword.trim() === '') {
+                $('#confirmPassword').addClass('error');
+                $('#confirmPasswordError').text('Please confirm your password').show();
+                isValid = false;
+            } else if (password !== confirmPassword) {
+                $('#confirmPassword').addClass('error');
+                $('#confirmPasswordError').text('Passwords do not match').show();
+                Toast.error('Passwords do not match!', 'Validation Error');
+                isValid = false;
+            }
+            
+            // If validation fails, stop form submission
+            if (!isValid) {
+                return false;
+            }
+            
+            var formData = {
+                name: $('#name').val(),
+                loginame: $('#loginame').val(),
+                password: password
+            };
+            
+            $.ajax({
+                url: '/Home/Signup',
+                type: 'POST',
+                data: JSON.stringify(formData),
+                contentType: 'application/json',
+                headers: {
+                    'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkdyaWxsX05fU2hha2VzIiwibmJmIjoxNzYxOTEzOTIyLCJleHAiOjE3Njk2ODk5MjIsImlhdCI6MTc2MTkxMzkyMn0.03UaoHr4_jBpuAwCNacnteOxmt47aiiJdCilQsRihbs'
+                },
+                success: function (response) {
+                    Toast.success('Your account has been created successfully!', 'Welcome!');
+                    setTimeout(function() {
+                        window.location.href = "/Home/Index";
+                    }, 2000);
+                },
+                error: function () {
+                    Toast.error('The email you have used is already registered. Please use a different email.', 'Registration Failed');
+                }
+            });
+        });
+    });
+</script>

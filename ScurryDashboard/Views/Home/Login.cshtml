@@ -1,0 +1,161 @@
+﻿@{
+    ViewData["Title"] = "Login Page";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/Login.css" asp-append-version="true" />
+}
+
+
+<div class="login-container align-content-center m-auto">
+    <div class="login-header" >
+        <h2>Welcome Back</h2>
+        <p>Please sign in to your account</p>
+    </div>
+
+    <form method="post" >
+        <div class="form-group">
+            <label for="loginame"> Email</label>
+            <input type="email" id="loginame" name="loginame" required placeholder="Enter your Email">
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <div class="input-wrapper">
+                <input type="password" id="password" name="password" required placeholder="Enter your password">
+                <span class="password-toggle" onclick="togglePassword()">👁️</span>
+            </div>
+        </div>
+
+        <button type="submit" class="login-btn">Sign In</button>
+    </form>
+    <p id="message" style="color: red; font-weight: bold;"></p>
+    <div class="forgot-password">
+        <a href="/forgot-password">Forgot your password?</a>
+    </div>
+
+    @* <div class="divider">
+        <span>or continue with</span>
+    </div> *@
+
+    @* <div class="social-login" style="display:none">
+        <button class="social-btn" onclick="socialLogin('google')">
+            🔍 Google
+        </button>
+        <button class="social-btn" onclick="socialLogin('github')">
+            🐙 GitHub
+        </button>
+    </div> *@
+
+    <div class="signup-link " style="display:none">
+        Don't have an account? <a href="/signup">Create one here</a>
+    </div>
+</div>
+
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Add Toast CSS -->
+<link rel="stylesheet" href="~/css/Toast.css" />
+<!-- Add Toast JS -->
+<script src="~/js/Toast.js"></script>
+
+<script>
+    function togglePassword() {
+        var passwordInput = document.getElementById('password');
+        var toggleBtn = document.querySelector('.password-toggle');
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleBtn.textContent = '🙈';
+        } else {
+            passwordInput.type = 'password';
+            toggleBtn.textContent = '👁️';
+        }
+    }
+
+    $(document).ready(function () {
+        // Validation function
+        function validateField($field) {
+            if ($field.val().trim() === '') {
+                $field.addClass('error');
+                return false;
+            } else {
+                $field.removeClass('error');
+                return true;
+            }
+        }
+
+        // Email validation function
+        function validateEmail($field) {
+            var emailPattern = new RegExp('^[^\\s@@]+@@[^\\s@@]+\\.[^\\s@@]+$');
+            var email = $field.val().trim();
+
+            if (email === '') {
+                $field.addClass('error');
+                return false;
+            } else if (!emailPattern.test(email)) {
+                $field.addClass('error');
+                return false;
+            } else {
+                $field.removeClass('error');
+                return true;
+            }
+        }
+
+        // Validate on blur (when user leaves field)
+        $('#loginame').on('blur', function () {
+            validateEmail($(this));
+        });
+
+        $('#password').on('blur', function () {
+            validateField($(this));
+        });
+
+        // Remove error on input
+        $('#loginame, #password').on('input', function () {
+            if ($(this).val().trim() !== '') {
+                $(this).removeClass('error');
+            }
+        });
+
+        $('form').on('submit', function (e) {
+            e.preventDefault();
+
+            // Validate all fields
+            var isValid = true;
+
+            if (!validateEmail($('#loginame'))) {
+                isValid = false;
+            }
+
+            if (!validateField($('#password'))) {
+                isValid = false;
+            }
+
+            // If validation fails, stop form submission
+            if (!isValid) {
+                Toast.error('Please fill in all required fields', 'Validation Error');
+                return false;
+            }
+            
+            $.ajax({
+                
+                url: '/Home/Login',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    loginame: $('#loginame').val(),
+                    password: $('#password').val()
+                }),
+                success: function (response) {
+                    Toast.success('You have been logged in successfully!', 'Welcome Back!');
+                    setTimeout(function() {
+                        window.location.href = "/Home/Index";
+                    }, 2000);
+                },
+                error: function () {
+                    Toast.error('Invalid email or password. Please check your credentials and try again.', 'Login Failed');
+                }
+            });
+        });
+    });
+</script>

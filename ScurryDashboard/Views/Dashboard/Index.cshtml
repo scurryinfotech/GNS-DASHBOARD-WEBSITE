@@ -1,0 +1,589 @@
+﻿@{
+    ViewData["Title"] = "Order Management";
+}
+@section styles{
+    <link rel="stylesheet" href="~/css/Dashboard.css" asp-append-version="true" />
+}
+
+<div class="dashboard">
+    <div class="header">
+      
+        <div class="header-stats">
+            <div class="stat-item">
+                <span class="stat-number" id="pending-count">0</span>
+                <span class="stat-label">Pending</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="active-count">0</span>
+                <span class="stat-label">Active</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="completed-count">0</span>
+                <span class="stat-label">Completed</span>
+            </div>
+        </div>
+        
+    </div>
+
+    <div class="main-content">
+        <div class="filters">
+            <button class="filter-btn active" data-status="all">All Orders</button>
+            <button class="filter-btn" data-status="pending">Pending</button>
+            <button class="filter-btn" data-status="accepted">Accepted</button>
+            <button class="filter-btn" data-status="preparing">Preparing</button>
+            <button class="filter-btn" data-status="ready">Ready</button>
+            <button class="filter-btn" data-status="delivered">Delivered</button>
+        </div>
+
+        <div class="orders-grid" id="orders-grid">
+            <!-- Orders will be dynamically inserted here -->
+        </div>
+
+        <div class="empty-state" id="empty-state" style="display: none;">
+            <div style="font-size: 4em; margin-bottom: 20px;">📦</div>
+            <h3>No orders found</h3>
+            <p>Orders matching your filter criteria will appear here.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Bill Modal -->
+<div class="modal" id="bill-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Order Bill</h2>
+            <button class="close-btn" onclick="closeBillModal()">&times;</button>
+        </div>
+        <div id="bill-content">
+            <!-- Bill content will be generated here -->
+        </div>
+        <div style="text-align: center; margin-top: 20px; gap: 10px; display: flex;">
+            <button class="btn btn-print" onclick="printBill()">
+                🖨️ Print Physical Bill
+            </button>
+            <button class="btn btn-view" onclick="downloadBill()">
+                💾 Save as PDF
+            </button>
+        </div>
+    </div>
+</div>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script>
+      
+            let orders = [
+            {
+                id: 'ORD001',
+                customer: 'John Doe',
+                phone: '+1-234-567-8900',
+                address: '123 Main St, Apt 4B, New York, NY 10001',
+                items: [
+                    { name: 'Margherita Pizza', qty: 2, price: 24.99 },
+                    { name: 'Caesar Salad', qty: 1, price: 12.99 },
+                    { name: 'Coca Cola', qty: 2, price: 4.99 }
+                ],
+                total: 67.96,
+                status: 'pending',
+                timestamp: '2025-09-26 14:30:00',
+                estimatedTime: 30
+            },
+            {
+                id: 'ORD002',
+                customer: 'Sarah Wilson',
+                phone: '+1-234-567-8901',
+                address: '456 Oak Ave, Suite 201, Brooklyn, NY 11201',
+                items: [
+                    { name: 'Chicken Burger', qty: 1, price: 18.99 },
+                    { name: 'French Fries', qty: 1, price: 6.99 },
+                    { name: 'Milkshake', qty: 1, price: 8.99 }
+                ],
+                total: 37.95,
+                status: 'preparing',
+                timestamp: '2025-09-26 14:25:00',
+                estimatedTime: 20
+            },
+            {
+                id: 'ORD003',
+                customer: 'Mike Johnson',
+                phone: '+1-234-567-8902',
+                address: '789 Pine Street, Floor 3, Queens, NY 11101',
+                items: [
+                    { name: 'Pasta Carbonara', qty: 1, price: 22.99 },
+                    { name: 'Garlic Bread', qty: 1, price: 8.99 }
+                ],
+                total: 34.96,
+                status: 'ready',
+                timestamp: '2025-09-26 14:20:00',
+                estimatedTime: 10
+            },
+            {
+                id: 'ORD004',
+                customer: 'Emily Davis',
+                phone: '+1-234-567-8903',
+                address: '321 Elm Drive, Bronx, NY 10451',
+                items: [
+                    { name: 'Sushi Platter', qty: 1, price: 45.99 },
+                    { name: 'Miso Soup', qty: 2, price: 12.98 },
+                    { name: 'Green Tea', qty: 2, price: 6.98 }
+                ],
+                total: 68.94,
+                status: 'delivered',
+                timestamp: '2025-09-26 14:15:00',
+                estimatedTime: 0
+            }
+        ];
+
+        let currentFilter = 'all';
+
+        // Initialize dashboard
+        $(document).ready(function() {
+            renderOrders();
+            updateStats();
+            startTimers();
+
+            // Set up filter buttons
+            $('.filter-btn').click(function() {
+                $('.filter-btn').removeClass('active');
+                $(this).addClass('active');
+                currentFilter = $(this).data('status');
+                renderOrders();
+            });
+        });
+
+        // Render orders based on current filter
+        function renderOrders() {
+
+
+            const filteredOrders = currentFilter === 'all'
+                ? orders
+                : orders.filter(order => order.status === currentFilter);
+
+            const ordersGrid = $('#orders-grid');
+            ordersGrid.empty();
+
+            if (filteredOrders.length === 0) {
+                $('#empty-state').show();
+                return;
+            } else {
+                $('#empty-state').hide();
+            }
+
+            filteredOrders.forEach(order => {
+                const orderCard = createOrderCard(order);
+                ordersGrid.append(orderCard);
+            });
+        }
+
+        // Create order card HTML
+        function createOrderCard(order) {
+            const statusClass = `status-${order.status}`;
+            const statusText = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+
+            let actionsHtml = '';
+
+            if (order.status === 'pending') {
+                actionsHtml = `
+                    <button class="btn btn-accept" onclick="updateOrderStatus('${order.id}', 'accepted')">
+                        ✅ Accept Order
+                    </button>
+                    <button class="btn btn-reject" onclick="rejectOrder('${order.id}')">
+                        ❌ Reject
+                    </button>
+                `;
+            } else if (order.status === 'accepted') {
+                actionsHtml = `
+                    <button class="btn btn-next" onclick="updateOrderStatus('${order.id}', 'preparing')">
+                        🍳 Start Preparing
+                    </button>
+                    <button class="btn btn-print" onclick="showBill('${order.id}')">
+                        📄 View Bill
+                    </button>
+                `;
+            } else if (order.status === 'preparing') {
+                actionsHtml = `
+                    <button class="btn btn-next" onclick="updateOrderStatus('${order.id}', 'ready')">
+                        ✅ Mark Ready
+                    </button>
+                    <button class="btn btn-print" onclick="showBill('${order.id}')">
+                        📄 View Bill
+                    </button>
+                `;
+            } else if (order.status === 'ready') {
+                actionsHtml = `
+                    <button class="btn btn-next" onclick="updateOrderStatus('${order.id}', 'delivered')">
+                        🚚 Mark Delivered
+                    </button>
+                    <button class="btn btn-print" onclick="showBill('${order.id}')">
+                        📄 View Bill
+                    </button>
+                `;
+            } else {
+                actionsHtml = `
+                    <button class="btn btn-print" onclick="showBill('${order.id}')">
+                        📄 View Bill
+                    </button>
+                `;
+            }
+
+            const timelineHtml = createTimeline(order.status);
+
+            const itemsHtml = order.items.map(item => `
+                <div class="item">
+                    <div>
+                        <span class="item-name">${item.name}</span>
+                        <span class="item-qty">x${item.qty}</span>
+                    </div>
+                    <span class="item-price">$${(item.price * item.qty).toFixed(2)}</span>
+                </div>
+            `).join('');
+
+            return `
+                <div class="order-card ${order.status}" id="order-${order.id}">
+                    <div class="order-header">
+                        <span class="order-id">${order.id}</span>
+                        <span class="order-status ${statusClass}">${statusText}</span>
+                    </div>
+
+                    <div class="customer-info">
+                        <div class="customer-name">👤 ${order.customer}</div>
+                        <div class="customer-phone">📞 ${order.phone}</div>
+                        <div class="customer-address">📍 ${order.address}</div>
+                    </div>
+
+                    ${timelineHtml}
+
+                    <div class="order-items">
+                        <div class="items-header">📋 Order Items:</div>
+                        ${itemsHtml}
+                    </div>
+
+                    <div class="order-total">
+                        Total: $${order.total.toFixed(2)}
+                    </div>
+
+                    <div class="order-time">
+                        <span class="time-info">🕒 Ordered: ${formatTime(order.timestamp)}</span>
+                        ${order.estimatedTime > 0 ? `<span class="timer" data-time="${order.estimatedTime}" data-order="${order.id}">⏱️ ${order.estimatedTime} min</span>` : ''}
+                    </div>
+
+                    <div class="actions">
+                        ${actionsHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        function createTimeline(currentStatus) {
+            const statuses = ['pending', 'accepted', 'preparing', 'ready', 'delivered'];
+            const statusIcons = ['⏳', '✅', '🍳', '📦', '🚚'];
+            const statusLabels = ['Pending', 'Accepted', 'Preparing', 'Ready', 'Delivered'];
+
+            let timelineHtml = '<div class="status-timeline"><div class="timeline-line"></div>';
+
+            statuses.forEach((status, index) => {
+                const isActive = statuses.indexOf(currentStatus) >= index;
+                const activeClass = isActive ? 'active' : '';
+
+                timelineHtml += `
+                    <div class="timeline-step">
+                        <div class="timeline-circle ${activeClass}">
+                            ${statusIcons[index]}
+                        </div>
+                        <div class="timeline-label">${statusLabels[index]}</div>
+                    </div>
+                `;
+            });
+
+            timelineHtml += '</div>';
+            return timelineHtml;
+        }
+
+        // Update order status
+        function updateOrderStatus(orderId, newStatus) {
+            const orderIndex = orders.findIndex(order => order.id === orderId);
+            if (orderIndex !== -1) {
+                orders[orderIndex].status = newStatus;
+
+                // Update estimated time based on status
+                if (newStatus === 'accepted') {
+                    orders[orderIndex].estimatedTime = 25;
+                } else if (newStatus === 'preparing') {
+                    orders[orderIndex].estimatedTime = 15;
+                } else if (newStatus === 'ready') {
+                    orders[orderIndex].estimatedTime = 5;
+                } else if (newStatus === 'delivered') {
+                    orders[orderIndex].estimatedTime = 0;
+                }
+
+                showNotification(`Order ${orderId} ${newStatus}!`);
+                renderOrders();
+                updateStats();
+            }
+        }
+
+        // Reject order
+        function rejectOrder(orderId) {
+            if (confirm(`Are you sure you want to reject order ${orderId}?`)) {
+                orders = orders.filter(order => order.id !== orderId);
+                showNotification(`Order ${orderId} rejected and removed.`);
+                renderOrders();
+                updateStats();
+            }
+        }
+
+        // Show bill modal
+        function showBill(orderId) {
+            const order = orders.find(order => order.id === orderId);
+            if (!order) return;
+
+            const billHtml = generateBillHtml(order);
+            $('#bill-content').html(billHtml);
+            $('#bill-modal').fadeIn(300);
+        }
+
+        // Generate bill HTML
+        function generateBillHtml(order) {
+            const currentDate = new Date().toLocaleString();
+            const subtotal = order.total * 0.9; // Assuming 10% tax
+            const tax = order.total * 0.1;
+
+            const itemsHtml = order.items.map(item => `
+                <div class="bill-item">
+                    <span>${item.name} x${item.qty}</span>
+                    <span>${(item.price * item.qty).toFixed(2)}</span>
+                </div>
+            `).join('');
+
+            return `
+                <div class="bill" id="printable-bill">
+                    <div class="bill-header">
+                        <div class="restaurant-name">Grill N Shakes</div>
+                        <div class="restaurant-info">123 Restaurant Street,Ulwe</div>
+                        <div class="restaurant-info">Phone: +1-555-FOOD-123 | Email: grillnshakes.com</div>
+                    <div class="restaurant-info">Website: www.grillnshakes.com</div>
+                    </div>
+
+                    <div class="bill-details">
+                        <div class="bill-row">
+                            <span><strong>Order ID:</strong></span>
+                            <span>${order.id}</span>
+                        </div>
+                        <div class="bill-row">
+                            <span><strong>Date & Time:</strong></span>
+                            <span>${currentDate}</span>
+                        </div>
+                        <div class="bill-row">
+                            <span><strong>Customer:</strong></span>
+                            <span>${order.customer}</span>
+                        </div>
+                        <div class="bill-row">
+                            <span><strong>Phone:</strong></span>
+                            <span>${order.phone}</span>
+                        </div>
+                        <div class="bill-row">
+                            <span><strong>Address:</strong></span>
+                            <span>${order.address}</span>
+                        </div>
+                        <div class="bill-row">
+                            <span><strong>Status:</strong></span>
+                            <span>${order.status.toUpperCase()}</span>
+                        </div>
+                    </div>
+
+                    <div class="bill-items">
+                        <div style="border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 15px;">
+                            <strong>ORDER ITEMS:</strong>
+                        </div>
+                        ${itemsHtml}
+                    </div>
+
+                    <div class="bill-total">
+                        <div class="bill-row" style="margin-bottom: 8px;">
+                            <span>Subtotal:</span>
+                            <span>${subtotal.toFixed(2)}</span>
+                        </div>
+                        <div class="bill-row" style="margin-bottom: 8px;">
+                            <span>Tax (10%):</span>
+                            <span>${tax.toFixed(2)}</span>
+                        </div>
+                        <div class="bill-row" style="margin-bottom: 8px;">
+                            <span>Delivery Fee:</span>
+                            <span>$3.99</span>
+                        </div>
+                        <div class="bill-row" style="font-size: 1.3em; margin-top: 10px; padding-top: 10px; border-top: 2px solid #333;">
+                            <span>TOTAL:</span>
+                            <span>${(order.total + 3.99).toFixed(2)}</span>
+                        </div>
+                    </div>
+
+                    <div class="bill-footer">
+                        <p><strong>Thank you for your order!</strong></p>
+                        <p>Please keep this receipt for your records.</p>
+                        <p>For any queries, contact us at support@deliciousfoods.com</p>
+                        <p style="margin-top: 15px; font-size: 0.8em;">
+                            Order processed on ${currentDate}<br>
+                            Payment Method: Online Payment<br>
+                            Transaction ID: TXN${order.id}${Date.now().toString().slice(-4)}
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Close bill modal
+        function closeBillModal() {
+            $('#bill-modal').fadeOut(300);
+        }
+
+        // Print bill
+        function printBill() {
+            window.print();
+        }
+
+        // Download bill (simulated)
+        function downloadBill() {
+            showNotification('Bill saved successfully! (PDF download would start in a real application)');
+        }
+
+        // Update statistics
+        function updateStats() {
+            const stats = {
+                pending: orders.filter(order => order.status === 'pending').length,
+                active: orders.filter(order => ['accepted', 'preparing', 'ready'].includes(order.status)).length,
+                completed: orders.filter(order => order.status === 'delivered').length
+            };
+
+            $('#pending-count').text(stats.pending);
+            $('#active-count').text(stats.active);
+            $('#completed-count').text(stats.completed);
+        }
+
+        // Format time
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+
+        // Show notification
+        function showNotification(message) {
+            const notification = $(`<div class="notification">${message}</div>`);
+            $('body').append(notification);
+
+            setTimeout(() => {
+                notification.fadeOut(300, function() {
+                    $(this).remove();
+                });
+            }, 3000);
+        }
+
+        // Timer functionality
+        function startTimers() {
+            setInterval(() => {
+                $('.timer').each(function() {
+                    let time = parseInt($(this).data('time'));
+                    if (time > 0) {
+                        time--;
+                        $(this).data('time', time);
+                        $(this).html(`⏱️ ${time} min`);
+
+                        // Update order data
+                        const orderId = $(this).data('order');
+                        const orderIndex = orders.findIndex(order => order.id === orderId);
+                        if (orderIndex !== -1) {
+                            orders[orderIndex].estimatedTime = time;
+                        }
+                    } else {
+                        $(this).html('⏰ Time up!');
+                        $(this).css('color', '#e74c3c');
+                    }
+                });
+            }, 60000); // Update every minute
+        }
+
+        // Add new order functionality (for demonstration)
+        function addSampleOrder() {
+            const sampleOrders = [
+                {
+                    id: `ORD${String(orders.length + 1).padStart(3, '0')}`,
+                    customer: 'Alex Smith',
+                    phone: '+1-234-567-8904',
+                    address: '555 Broadway Ave, Manhattan, NY 10001',
+                    items: [
+                        { name: 'BBQ Chicken Pizza', qty: 1, price: 28.99 },
+                        { name: 'Buffalo Wings', qty: 1, price: 15.99 },
+                        { name: 'Sprite', qty: 1, price: 2.99 }
+                    ],
+                    total: 50.96,
+                    status: 'pending',
+                    timestamp: new Date().toISOString().slice(0, 19).replace('T', ' '),
+                    estimatedTime: 35
+                },
+                {
+                    id: `ORD${String(orders.length + 1).padStart(3, '0')}`,
+                    customer: 'Lisa Johnson',
+                    phone: '+1-234-567-8905',
+                    address: '777 Park Place, Staten Island, NY 10301',
+                    items: [
+                        { name: 'Veggie Delight Sandwich', qty: 2, price: 24.98 },
+                        { name: 'Fresh Orange Juice', qty: 2, price: 9.98 }
+                    ],
+                    total: 37.95,
+                    status: 'pending',
+                    timestamp: new Date().toISOString().slice(0, 19).replace('T', ' '),
+                    estimatedTime: 25
+                }
+            ];
+
+            const randomOrder = sampleOrders[Math.floor(Math.random() * sampleOrders.length)];
+            randomOrder.id = `ORD${String(orders.length + 1).padStart(3, '0')}`;
+            orders.unshift(randomOrder);
+
+            showNotification(`New order received: ${randomOrder.id}`);
+            renderOrders();
+            updateStats();
+        }
+
+        // Simulate new orders every 2 minutes (for demonstration)
+        setInterval(() => {
+            if (Math.random() < 0.3) { // 30% chance every 2 minutes
+                addSampleOrder();
+            }
+        }, 120000);
+
+        // Keyboard shortcuts
+        $(document).keydown(function(e) {
+            // ESC to close modal
+            if (e.keyCode === 27) {
+                closeBillModal();
+            }
+
+            // Ctrl+P to print
+            if (e.ctrlKey && e.keyCode === 80 && $('#bill-modal').is(':visible')) {
+                e.preventDefault();
+                printBill();
+            }
+        });
+
+        // Click outside modal to close
+        $('.modal').click(function(e) {
+            if (e.target === this) {
+                closeBillModal();
+            }
+        });
+
+        // Auto-refresh orders every 30 seconds
+        setInterval(() => {
+            updateStats();
+        }, 30000);
+
+        // Sound notification for new orders (optional - commented out to avoid auto-play issues)
+        
+        function playNotificationSound() {
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEgBSuBzvLZiDUGGIev8uCAOwsbXrPp5KNUEgU=');
+            audio.volume = 0.3;
+            audio.play().catch(() => {}); // Ignore errors if audio can't play
+        }
+   </script>

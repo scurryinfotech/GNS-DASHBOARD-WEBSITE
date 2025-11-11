@@ -1,0 +1,692 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+@section styles {
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        /* Bill Modal Styles */
+        #bill-modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.7);
+        }
+
+            #bill-modal .modal-content {
+                background-color: #fefefe;
+                margin: 2% auto;
+                padding: 0;
+                border: 1px solid #888;
+                width: 90%;
+                max-width: 800px;
+                border-radius: 10px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            }
+
+            #bill-modal .modal-header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 20px;
+                border-radius: 10px 10px 0 0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            #bill-modal .modal-title {
+                margin: 0;
+                font-size: 24px;
+            }
+
+            #bill-modal .close-btn {
+                background: none;
+                border: none;
+                color: white;
+                font-size: 32px;
+                cursor: pointer;
+                padding: 0;
+                width: 40px;
+                height: 40px;
+                line-height: 40px;
+                text-align: center;
+                border-radius: 50%;
+                transition: background 0.3s;
+            }
+
+                #bill-modal .close-btn:hover {
+                    background: rgba(255,255,255,0.2);
+                }
+
+        #bill-content {
+            padding: 20px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .bill {
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 30px;
+            border: 2px solid #333;
+        }
+
+        .bill-header {
+            text-align: center;
+            border-bottom: 2px dashed #333;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .restaurant-name {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .restaurant-info {
+            font-size: 14px;
+            color: #666;
+            margin: 5px 0;
+        }
+
+        .bill-details {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+
+        .bill-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 5px 0;
+        }
+
+        .bill-items {
+            margin: 20px 0;
+            padding: 15px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .bill-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+            .bill-item:last-child {
+                border-bottom: none;
+            }
+
+        .bill-total {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .bill-footer {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 2px dashed #333;
+            margin-top: 20px;
+            color: #666;
+        }
+
+        .btn-print, .btn-view {
+            padding: 12px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .btn-print {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+            .btn-print:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            }
+
+        .btn-view {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+            .btn-view:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+            }
+
+        media print {
+           
+
+        {
+            visibility: hidden;
+        }
+
+        #printable-bill, #printable-bill * {
+            visibility: visible;
+        }
+
+        #printable-bill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+
+        #bill-modal .modal-header,
+        .btn-print,
+        .btn-view {
+            display: none !important;
+        }
+
+        }
+    </style>
+}
+
+<div class="container">
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h3></h3>
+        <a href="/Home/Logout" class="btn btn-danger" id="Logout">Logout</a>
+    </div>
+
+    <!--- Live Orders ---------->
+    <div class="dashboard-section">
+        <div class="section-title">
+            <span>📊</span> Live Orders Dashboard
+            <div class="position-relative ml-auto">
+                <i class="fas fa-bell text-warning" style="font-size: 1.2rem;"></i>
+                <span class="notification-badge" id="newOrdersBadge">0</span>
+            </div>
+        </div>
+
+        <!-- Platform Tabs -->
+        <div class="platform-tabs">
+            <button class="platform-tab active" data-platform="all" onclick="filterOrders('all')">
+                <div class="platform-indicator restaurant-indicator"></div>
+                All Orders
+            </button>
+            <button class="platform-tab zomato" data-platform="zomato" onclick="filterOrders('zomato')">
+                <div class="platform-indicator zomato-indicator"></div>
+                Zomato
+            </button>
+            <button class="platform-tab swiggy" data-platform="swiggy" onclick="filterOrders('swiggy')">
+                <div class="platform-indicator swiggy-indicator"></div>
+                Swiggy
+            </button>
+            <button class="platform-tab" data-platform="restaurant" onclick="filterOrders('restaurant')">
+                <div class="platform-indicator restaurant-indicator"></div>
+                Restaurant
+            </button>
+            <div id="status">
+                <button id="zomatoBtn">Disconnect Zomato</button>
+                <p>Zomato: <span id="zomatoStatus">Connected</span></p>
+
+                <button id="swiggyBtn">Disconnect Swiggy</button>
+                <p>Swiggy: <span id="swiggyStatus">Connected</span></p>
+
+                <div class="online-status-section text-center mt-3">
+                    <button id="coffeeBtn" class="btn connect">Turn OFF Coffee Orders</button>
+                    <p id="coffeeStatus" class="mt-2 text-success">Coffee Ordering: ON ☕</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="orders-grid" id="ordersContainer">
+            <!-- Orders will be loaded here dynamically -->
+        </div>
+    </div>
+
+    <!-- Table Management Section -->
+    <div class="dashboard-section">
+        <div class="section-title">
+            <span>🍽️</span> Table Management
+            <div class="position-relative ml-auto">
+                <i class="fas fa-bell text-warning" style="font-size: 1.2rem;"></i>
+                <span class="notification-badge" id="newOrdersBadge">3</span>
+            </div>
+        </div>
+        <div id="divTable"></div>
+    </div>
+
+    <!-- Enhanced Modal -->
+    <div class="modal fade" id="divInProgressModal" tabindex="-1" role="dialog" aria-labelledby="orderModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title font-weight-bold" id="orderModalLabel">
+                        <span class="modal-title"></span>
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h4 class="text-center font-weight-bold mb-3">Grill N Shakes</h4>
+                    <h6 class="text-center font-weight-bold mb-3">Order Receipt</h6>
+                    <div class="table-responsive">
+                        <div id="orderDetails"></div>
+                    </div>
+                </div>
+                <div class="modal-footer d-flex flex-column flex-md-row justify-content-end gap-2">
+                    <button type="button" class="btn btn-success mb-2 mb-md-0" id="confirmOrderBtn">
+                        <i class="fas fa-check"></i> Accept Order
+                    </button>
+                    <button type="button" class="btn btn-dark" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="payment-modal-overlay">
+        <div class="payment-modal">
+            <div class="payment-modal-header">
+                <h3>Select Payment Mode</h3>
+                <p>Choose how the customer paid for this order</p>
+            </div>
+
+            <div class="payment-options">
+                <div class="payment-option" data-mode="cash">
+                    <div class="payment-icon">💵</div>
+                    <h4>Cash</h4>
+                    <p>Paid in cash</p>
+                </div>
+                <div class="payment-option" data-mode="online">
+                    <div class="payment-icon">💳</div>
+                    <h4>Online</h4>
+                    <p>Digital payment</p>
+                </div>
+            </div>
+
+            <div class="payment-error" id="paymentError">
+                Please select a payment mode
+            </div>
+
+            <div class="payment-modal-actions">
+                <button class="payment-btn payment-btn-cancel" id="cancelPayment">Cancel</button>
+                <button class="payment-btn payment-btn-confirm" id="confirmPayment" disabled>Complete Order</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order History Section -->
+    <h4 class="mt-4 text-success">
+        <i class="fas fa-history"></i> Order History
+    </h4>
+
+    <div class="table-responsive">
+        <table id="orderHistoryTable" class="table table-bordered table-striped">
+            <thead class="thead-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Customer Name</th>
+                    <th>Customer Phone</th>
+                    <th>Table No</th>
+                    <th>Item Name</th>
+                    <th>Price</th>
+                    <th>Total Items</th>
+                    <th>Payment Mode</th>
+                    <th>Date</th>
+                    <th>View Bill</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- History rows will appear here -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Bill Modal -->
+    <div id="bill-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Order Bill</h2>
+                <button class="close-btn" onclick="closeBillModal()">&times;</button>
+            </div>
+            <div id="bill-content">
+                <!-- Bill content will be generated here -->
+            </div>
+            <div style="text-align: center; margin-top: 20px; gap: 10px; display: flex; justify-content: center; padding: 20px;">
+                <button class="btn-print" onclick="printBill()">
+                    🖨️ Print Physical Bill
+                </button>
+                <button class="btn-view" onclick="downloadBill()">
+                    💾 Save as PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    // Coffee ON/OFF toggle
+    let isCoffeeActive = false;
+
+    $(document).ready(function () {
+        initializeCoffeeUI();
+        loadOrderHistory();
+
+        $('#coffeeBtn').on('click', function () {
+            isCoffeeActive = !isCoffeeActive;
+            updateCoffeeUI();
+            toggleCoffeeAvailability(isCoffeeActive);
+        });
+    });
+
+    function initializeCoffeeUI() {
+        $.ajax({
+            url: '/Home/GetCoffeeAvailability',
+            method: 'GET',
+            success: function (data) {
+                isCoffeeActive = (data === true || data === "true");
+                updateCoffeeUI();
+            },
+            error: function () {
+                console.warn('Failed to get coffee availability');
+            }
+        });
+    }
+
+    function updateCoffeeUI() {
+        if (isCoffeeActive) {
+            $('#coffeeBtn')
+                .removeClass('connect')
+                .addClass('disconnect')
+                .text('Disconnect Coffee Orders');
+            $('#coffeeStatus')
+                .text('Connected')
+                .removeClass('disconnected sync-offline')
+                .addClass('connected sync-online');
+        } else {
+            $('#coffeeBtn')
+                .removeClass('disconnect')
+                .addClass('connect')
+                .text('Connect Coffee Orders');
+            $('#coffeeStatus')
+                .text('Disconnected')
+                .removeClass('connected sync-online')
+                .addClass('disconnected sync-offline');
+        }
+    }
+
+    function toggleCoffeeAvailability(isAvailable) {
+        $.ajax({
+            url: '/Home/SetAvailability',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(isAvailable),
+            success: function () {
+                if (typeof showNotification === 'function') {
+                    showNotification(`Coffee orders ${isAvailable ? 'enabled' : 'disabled'}`, 'success');
+                }
+            },
+            error: function () {
+                if (typeof showNotification === 'function') {
+                    showNotification('Failed to update coffee availability', 'error');
+                }
+            }
+        });
+    }
+
+    // Load order history
+    function loadOrderHistory() {
+        $.ajax({
+            url: '/Home/GetOrderHistory',
+            type: 'GET',
+            success: function (data) {
+                bindOrderHistory(data);
+            },
+            error: function (xhr, status, error) {
+                console.error('Error loading order history:', error);
+                $('#orderHistoryTable tbody').html(`
+                    <tr><td colspan="10" class="text-center text-danger">Failed to load order history</td></tr>
+                `);
+            }
+        });
+    }
+
+    // Bind order history to table
+    function bindOrderHistory(data) {
+        const tbody = $('#orderHistoryTable tbody');
+        tbody.empty();
+
+        if (!data || data.length === 0) {
+            tbody.append(`
+                <tr><td colspan="10" class="text-center text-muted">No completed orders yet.</td></tr>
+            `);
+            return;
+        }
+
+        // Group orders by orderId
+        const groupedOrders = {};
+        data.forEach(order => {
+            if (!groupedOrders[order.orderId]) {
+                groupedOrders[order.orderId] = [];
+            }
+            groupedOrders[order.orderId].push(order);
+        });
+
+        // Sort order IDs in descending order (newest first)
+        const sortedOrderIds = Object.keys(groupedOrders).sort((a, b) => b - a);
+
+        // Display one row per order
+        sortedOrderIds.forEach(orderId => {
+            const orders = groupedOrders[orderId];
+            const firstOrder = orders[0];
+            const totalItems = orders.length;
+            const totalAmount = orders.reduce((sum, order) => sum + (Number(order.price) || 0), 0);
+            const date = new Date(firstOrder.date).toLocaleString('en-IN');
+
+            // Safely encode JSON for embedding in a data- attribute
+            const ordersJsonEncoded = encodeURIComponent(JSON.stringify(orders));
+
+            const row = `
+                <tr class="table-success">
+                    <td><strong>${firstOrder.orderId}</strong></td>
+                    <td>${firstOrder.customerName || 'N/A'}</td>
+                    <td>${firstOrder.phone || 'N/A'}</td>
+                    <td>Table ${firstOrder.tableNo || 'N/A'}</td>
+                    <td style="max-width: 200px; overflow-wrap: break-word;">${firstOrder.itemName || 'N/A'}</td>
+                    <td><strong>₹${totalAmount.toFixed(2)}</strong></td>
+                    <td>${totalItems}</td>
+                    <td>${firstOrder.paymentMode || 'N/A'}</td>
+                    <td style="white-space: nowrap;">${date}</td>
+                    <td>
+                        <button class="btn btn-sm btn-info btn-view-order" data-orders="${ordersJsonEncoded}">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    }
+
+    
+    $(document).on('click', '.btn-view-order', function () {
+        const encoded = $(this).attr('data-orders');
+        if (!encoded) {
+            alert('No order details available');
+            return;
+        }
+        try {
+            const orders = JSON.parse(decodeURIComponent(encoded));
+            viewOrderDetails(orders);
+        } catch (err) {
+            console.error('Failed to parse order details:', err);
+            alert('Failed to load order details');
+        }
+    });
+    
+    // View order details
+    function viewOrderDetails(orders) {
+        
+        if (!orders || orders.length === 0) {
+            alert('No order details available');
+            return;
+        }
+
+        const firstOrder = orders[0];
+        const totalAmount = orders.reduce((sum, order) => sum + (Number(order.price) || 0), 0);
+        const date = new Date(firstOrder.date).toLocaleString('en-IN', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        // Generate items HTML
+        let itemsHtml = '';
+        orders.forEach((order, index) => {
+            const halfQty = Number(order.halfPortion) || 0;
+            const fullQty = Number(order.fullPortion) || 0;
+            const totalQty = halfQty + fullQty;
+            const qtyText = halfQty > 0 && fullQty > 0
+                ? `${halfQty} Half + ${fullQty} Full`
+                : halfQty > 0
+                    ? `${halfQty} Half`
+                    : `${fullQty} Full`;
+
+            itemsHtml += `
+                <div class="bill-item">
+                    <span><strong>${index + 1}.</strong> ${order.itemName || 'N/A'} <small>(${qtyText})</small></span>
+                    <span><strong>₹${(Number(order.price) || 0).toFixed(2)}</strong></span>
+                </div>
+            `;
+        });
+
+        // Calculate tax (assuming 5% GST)
+        const tax = totalAmount * 0.05;
+        const subtotal = totalAmount - tax;
+
+        const billHtml = `
+            <div class="bill" id="printable-bill">
+                <div class="bill-header">
+                    <div class="restaurant-name">Grill N Shakes</div>
+                    <div class="restaurant-info">📍 123 Restaurant Street, Ulwe</div>
+                    <div class="restaurant-info">📞 Phone: +91-XXXX-XXXXXX</div>
+                    <div class="restaurant-info">🌐 www.grillnshakes.com</div>
+                </div>
+
+                <div class="bill-details">
+                    <div class="bill-row">
+                        <span><strong>Order ID:</strong></span>
+                        <span>#${firstOrder.orderId}</span>
+                    </div>
+                    <div class="bill-row">
+                        <span><strong>Date & Time:</strong></span>
+                        <span>${date}</span>
+                    </div>
+                    <div class="bill-row">
+                        <span><strong>Customer:</strong></span>
+                        <span>${firstOrder.customerName || 'Walk-in Customer'}</span>
+                    </div>
+                    <div class="bill-row">
+                        <span><strong>Phone:</strong></span>
+                        <span>${firstOrder.phone || 'N/A'}</span>
+                    </div>
+                    <div class="bill-row">
+                        <span><strong>Table No:</strong></span>
+                        <span>${firstOrder.tableNo || 'N/A'}</span>
+                    </div>
+                    <div class="bill-row">
+                        <span><strong>Payment Mode:</strong></span>
+                        <span><span style="display: inline-block; padding: 2px 8px; background: #28a745; color: white; border-radius: 3px; font-size: 12px;">${firstOrder.paymentMode || 'CASH'}</span></span>
+                    </div>
+                </div>
+
+                <div class="bill-items">
+                    <div style="border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 15px;">
+                        <strong>📋 ORDER ITEMS (${orders.length})</strong>
+                    </div>
+                    ${itemsHtml}
+                </div>
+
+                <div class="bill-total">
+                    <div class="bill-row" style="margin-bottom: 8px;">
+                        <span>Subtotal:</span>
+                        <span>₹${subtotal.toFixed(2)}</span>
+                    </div>
+                    <div class="bill-row" style="margin-bottom: 8px;">
+                        <span>GST (5%):</span>
+                        <span>₹${tax.toFixed(2)}</span>
+                    </div>
+                    <div class="bill-row" style="font-size: 1.3em; margin-top: 10px; padding-top: 10px; border-top: 2px solid #333;">
+                        <span>GRAND TOTAL:</span>
+                        <span>₹${totalAmount.toFixed(2)}</span>
+                    </div>
+                </div>
+
+                <div class="bill-footer">
+                    <p><strong>🙏 Thank you for your order!</strong></p>
+                    <p>Please keep this receipt for your records.</p>
+                    <p>For any queries, contact us at support@grillnshakes.com</p>
+                    <p style="margin-top: 15px; font-size: 0.85em; color: #999;">
+                        GST No: 27XXXXX1234X1ZX<br>
+                        FSSAI Lic. No: 12345678901234
+                    </p>
+                </div>
+            </div>
+        `;
+
+        $('#bill-content').html(billHtml);
+        $('#bill-modal').fadeIn(300);
+    }
+
+    // Close bill modal
+    function closeBillModal() {
+        $('#bill-modal').fadeOut(300);
+    }
+
+    // Print bill
+    function printBill() {
+        window.print();
+    }
+
+    // Download bill as PDF (simulated)
+    function downloadBill() {
+        
+         const element = document.getElementById('printable-bill');
+         html2pdf().from(element).save('bill-' + Date.now() + '.pdf');
+    }
+
+   
+    $(document).on('click', '#bill-modal', function(e) {
+        if (e.target.id === 'bill-modal') {
+            closeBillModal();
+        }
+    });
+
+    // ESC key to close modal
+    $(document).keyup(function(e) {
+        if (e.key === "Escape") {
+            closeBillModal();
+        }
+    });
+</script>
