@@ -536,7 +536,7 @@
         }
         try {
             const orders = JSON.parse(decodeURIComponent(encoded));
-            viewOrderDetails(orders);
+            viewOrderDetailss(orders);
         } catch (err) {
             console.error('Failed to parse order details:', err);
             alert('Failed to load order details');
@@ -544,7 +544,7 @@
     });
     
     // View order details
-    function viewOrderDetails(orders) {
+    function viewOrderDetailss(orders) {
         
         if (!orders || orders.length === 0) {
             alert('No order details available');
