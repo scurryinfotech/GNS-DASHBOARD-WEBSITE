@@ -20,6 +20,9 @@ let orderAcceptedTimes = {};
 let completionTimers = {};
 let currentOrderId = null;
 let currentOrderData = null;
+let lastBeepTime = 0;
+
+let audioUnlocked = false;
 
 function dateKeyFromISO(iso) {
     if (!iso) return "";
@@ -60,7 +63,28 @@ $('#stopBeepBtnmain').click(function () {
 });
 
 
+$(document).on("click keydown touchstart", function unlockAudio() {
+    if (!audioUnlocked) {
+        const testAudio = new Audio("/sound/alarm.mp3.mp3");
+        testAudio.play()
+            .then(() => {
+                testAudio.pause();
+                testAudio.currentTime = 0;
+                audioUnlocked = true;
+                console.log("✅ Audio unlocked — future playbacks allowed");
+            })
+            .catch(err => console.warn("⚠️ Audio unlock blocked:", err));
+
+        $(document).off("click keydown touchstart", unlockAudio);
+    }
+});
+
 function playBeep() {
+
+    if (!audioUnlocked) {
+        
+        return;
+    }
     if (isBeepPlaying) return;
 
     try {
@@ -69,65 +93,61 @@ function playBeep() {
             audioBeep.loop = true;
         }
 
-        isBeepPlaying = true;
-
         const playPromise = audioBeep.play();
 
         if (playPromise !== undefined) {
             playPromise
                 .then(() => {
-                    console.log('Beep started successfully');
+                    console.log('Beep started');
+                    isBeepPlaying = true;
                     showStopBeepButton();
                 })
-                .catch(error => {
-                    console.error('Beep play error:', error);
+                .catch(err => {
+                    console.warn('Audio play blocked by browser:', err);
                     isBeepPlaying = false;
-                    audioBeep = null;
                 });
         }
+
     } catch (error) {
-        console.error('Beep creation error:', error);
+        console.error('Audio play exception:', error);
         isBeepPlaying = false;
-        audioBeep = null;
     }
 }
 
 
 
+
 function stopBeep() {
-
-
     if (audioBeep) {
         try {
             audioBeep.pause();
             audioBeep.currentTime = 0;
             audioBeep.loop = false;
-
         } catch (e) {
             console.error('Error stopping audioBeep:', e);
         }
     }
-
-    isBeepPlaying = false;
-    hideStopBeepButton();
-}
-function showStopBeepButton() {
-
-    $('#stopBeepBtn').remove();
-
-
-    const stopBtn = `
-        <button id="stopBeepBtn" class="btn btn-danger btn-sm position-fixed" 
-                style="top: 20px; right: 20px; z-index: 9999; display: block;">
-            <i class="fas fa-stop"></i> Stop Alarm
-        </button>
-    `;
-    $('body').append(stopBtn);
+    isBeepPlaying = false; // reset flag properly
+    //hideStopBeepButton();
 }
 
-function hideStopBeepButton() {
-    $('#stopBeepBtn').remove();
-}
+//function showStopBeepButton() {
+
+//    $('#stopBeepBtn').remove();
+
+
+//    const stopBtn = `
+//        <button id="stopBeepBtn" class="btn btn-danger btn-sm position-fixed" 
+//                style="top: 20px; right: 20px; z-index: 9999; display: block;">
+//            <i class="fas fa-stop"></i> Stop Alarm
+//        </button>
+//    `;
+//    $('body').append(stopBtn);
+//}
+
+//function hideStopBeepButton() {
+//    $('#stopBeepBtn').remove();
+//}
 
 
 function checkAndStopBeepIfNoProblems() {
@@ -138,12 +158,12 @@ function checkAndStopBeepIfNoProblems() {
         const acceptedTime = orderAcceptedTimes[order.id];
         if (!acceptedTime) return false;
         const elapsed = Date.now() - acceptedTime;
-        return elapsed > 10 * 60 * 1000; // 10 minutes
+        return elapsed > 10 * 60 * 1000;
     });
 
     if (newOrders.length === 0 && overdueOrders.length === 0) {
-        console.log('No problems found - stopping all beeps');
-        stopAllBeeps(); // ✅ Use stopAllBeeps instead
+        
+        stopAllBeeps(); 
     }
 }
 
@@ -185,7 +205,7 @@ function stopAllBeeps() {
     });
 }
 
-// -------------------------------------------
+
 
 $(document).ready(function () {
 
@@ -198,11 +218,12 @@ $(document).ready(function () {
     renderOrders();
     updateNewOrdersBadge();
     //getOrdersFromRestaurant();
-    setInterval(function () {
-        getOrdersFromRestaurant(false);
-    }, 30000);
+    //setInterval(function () {
+    //    getOrdersFromRestaurant(false);
+    //}, 30000);
 
     $(document).on('click', '.card', function () {
+      
         const tableTitle = $(this).find('.card-title').text();
         $('.modal-title').text(tableTitle);
         currentTableNo = parseInt(tableTitle.replace('Table', ''));
@@ -247,7 +268,6 @@ $(document).ready(function () {
 
 
                         setTimeout(() => {
-
                             updateConfirmOrderBtn(tableNo);
                             updateOrderDetails(tableTitle);
                         }, 500);
@@ -270,7 +290,7 @@ $(document).ready(function () {
                     completedCompletes++;
                     if (completedCompletes === totalCompletes) {
                         showSuccessMessage(`Completed ${totalCompletes} order(s) for Table ${tableNo}!`);
-
+                       
                         updateConfirmOrderBtn(tableNo);
                         updateOrderDetails(tableTitle);
                     }
@@ -281,7 +301,7 @@ $(document).ready(function () {
 
 
     $(document).on('show.bs.modal', '#divInProgressModal', function () {
-        const tableTitle = $('.modal-title').text();
+        const tableTitle = $(this).find('.modal-title').text().trim();
         const tableNo = parseInt(tableTitle.replace('Table', ''));
         updateConfirmOrderBtn(tableNo);
     });
@@ -375,26 +395,19 @@ function loadTableOrders() {
                 }
             });
 
-            // --- Per-table beep logic for NEW orders ---
+           
             const newOrderTables = [...new Set(assigningOrders.map(o => o.tableNo))];
 
-            // Start beep for tables with new orders (if not already beeping)
-            newOrderTables.forEach(tableNo => {
-                if (!beepTables[tableNo]) {
-                    try {
-                        const audio = new Audio('/sound/alarm.mp3.mp3');
-                        audio.loop = true;
-                        audio.play().then(() => {
-                            beepTables[tableNo] = audio;
-                        }).catch(err => console.error('New order beep error:', err));
-                    } catch (err) {
-                        console.error('New order beep creation error:', err);
-                    }
-                }
-            });
+          
+            if (newOrderTables.length > 0 && !isBeepPlaying) {
+                playBeep();
+            }
 
-            // Don't automatically stop beeps for tables - let overdue orders keep beeping
-            // Only stop if there are no new orders AND no overdue orders for that table
+           
+            if (newOrderTables.length === 0) {
+                checkAndStopBeepIfNoProblems();
+            }
+
             Object.keys(beepTables).forEach(tableNo => {
                 const hasNewOrders = newOrderTables.includes(Number(tableNo));
                 const hasOverdueOrders = activeOrders.some(order => {
@@ -446,9 +459,10 @@ function loadTableOrders() {
                 }
             });
 
-            // --- Pop-up logic: show modal for tables that just received a new order ---
+            
             if (!window.prevNewOrderTables) window.prevNewOrderTables = [];
             newOrderTables.forEach(tableNo => {
+                
                 if (!window.prevNewOrderTables.includes(tableNo)) {
                     $('.modal-title').text('Table ' + tableNo);
                     $('#divInProgressModal').modal('show');
@@ -470,7 +484,7 @@ function loadTableOrders() {
     });
 }
 
-// Filter completed orders to history
+    
 function filterCompletedOrdersToHistory() {
     if (!window.liveOrdersData) return;
 
@@ -478,7 +492,7 @@ function filterCompletedOrdersToHistory() {
     const completedOrders = window.liveOrdersData.filter(order => order.orderStatusId === 3);
     const activeOrders = window.liveOrdersData.filter(order => order.orderStatusId !== 3);
 
-    // Add completed orders to history if not already there
+    
     completedOrders.forEach(order => {
         if (!orderHistory.find(h => h.id === order.id)) {
             orderHistory.push({
@@ -488,11 +502,10 @@ function filterCompletedOrdersToHistory() {
         }
     });
 
-    // Keep only non-completed in live orders
     window.liveOrdersData = activeOrders;
 }
 
-// Load table count from backend
+
 function loadTableCount() {
     $.ajax({
         url: '/home/GetTableCount',
@@ -557,14 +570,14 @@ function bindDynamicTable() {
         if (i % 3 == 0)
             tblhtml += '<div class="row p-2"><div class="card-group" style="width: 100%; height: 100%;">';
 
-        // Only get active/assigning orders for this table
+        
         const tableOrders = data.filter(order => order.tableNo === tbl && order.orderStatusId !== 3);
         let totalPrice = 0;
         tableOrders.forEach(order => {
             totalPrice += (Number(order.halfPortion) + Number(order.fullPortion)) * Number(order.price);
         });
 
-        // Card color and status text based on orderStatusId priority logic
+
         let cardClass = 'bg-success';
         let statusText = 'Available';
 
@@ -585,7 +598,7 @@ function bindDynamicTable() {
                 statusText = 'Assigning Order';
             } else if (hasOverdueOrders) {
                 cardClass = 'bg-danger';
-                statusText = 'Overdue!';
+                statusText = 'Delay in Serving';
             } else if (hasActiveOrders) {
                 cardClass = 'bg-info';
                 statusText = 'Active';
@@ -602,7 +615,7 @@ function bindDynamicTable() {
             tblhtml += '</div></div>';
     });
 
-    // Close any remaining open card groups
+    
     if (arrTable.length % 3 !== 0) {
         tblhtml += '</div></div>';
     }
@@ -652,7 +665,7 @@ function renderOrderHistory() {
     } else {
         sortedHistory.forEach(order => {
             const qty = Number(order.halfPortion) + Number(order.fullPortion);
-            const totalPrice = qty * Number(order.price);
+            const totalPrice = qty * Number(order.price); 
             totalHistoryAmount += totalPrice;
 
             const displayDate = getOrderDate(order)
@@ -679,19 +692,18 @@ function renderOrderHistory() {
         });
     }
 
-    // ✅ Check if section exists already
+   
     if ($('#orderHistorySection').length === 0) {
 
         //$('#orderHistoryContainer').html(sectionHtml);
 
     } else {
-        // ✅ Only update tbody content instead of removing entire card
         $('#historyTableBody').html(rowsHtml);
         $('.card-footer strong:first').text(`Total Completed Orders: ${sortedHistory.length}`);
         $('.card-footer strong:last').text(`Total Revenue: ₹${totalHistoryAmount}`);
     }
 
-    // ✅ Rebuild filter dropdowns only when new unique tables/dates found
+    
     const tableSelect = $('#historyTableFilter');
     const dateSelect = $('#historyDateFilter');
     const currentTables = tableSelect.find('option').length - 1;
@@ -724,7 +736,6 @@ function renderOrderHistory() {
 
 
 
-// Show order details for a table in the modal (FIXED: only show selected table orders)
 function updateOrderDetails(tableTitle) {
     const data = window.liveOrdersData || [];
     const tableNo = parseInt(tableTitle.replace('Table', ''));
@@ -733,7 +744,7 @@ function updateOrderDetails(tableTitle) {
 
     // Pagination variables
     let currentPage = 1;
-    const rowsPerPage = 5;
+    const rowsPerPage = 10;
 
     function renderTable(filteredOrders) {
         let detailsHtml = `
@@ -768,7 +779,7 @@ function updateOrderDetails(tableTitle) {
                 const qty = Number(order.halfPortion) + Number(order.fullPortion);
                 const totalPrice = qty * Number(order.price);
 
-                // Determine button states and text based on orderStatusId
+               
                 let actionButton = '';
                 let isUpdateDisabled = '';
                 let isDeleteDisabled = '';
@@ -776,16 +787,15 @@ function updateOrderDetails(tableTitle) {
                 let statusText = '';
 
                 if (order.orderStatusId === 1) {
-                    // Assigning Order - can update quantity, can accept, can delete
+                    
                     actionButton = `<button class="btn btn-success btn-sm accept-order-row-btn" data-id="${order.id}">Accept</button>`;
                     isUpdateDisabled = '';
                     isDeleteDisabled = '';
                     rowClass = 'bg-warning';
                     statusText = 'Assigning Order';
                 } else if (order.orderStatusId === 2) {
-                    // Active - can complete, cannot update quantity, cannot delete
-                    // Check if overdue
-                    const acceptedTime = orderAcceptedTimes[order.id];
+                    
+                    const acceptedTime = orderAcceptedTimes[order.id];              
                     const isOverdue = acceptedTime && (Date.now() - acceptedTime) > 10 * 60 * 1000;
 
                     if (isOverdue) {
@@ -858,10 +868,9 @@ function updateOrderDetails(tableTitle) {
         });
     }
 
-    // Initial render with filtered orders for this table only
     renderTable(tableOrders);
 
-    // Delete order event handler
+    
     $(document).off('click', '.delete-order-btn').on('click', '.delete-order-btn', function () {
         const id = $(this).data('id');
         let order = (window.liveOrdersData || []).find(o => o.id === id);
@@ -871,7 +880,7 @@ function updateOrderDetails(tableTitle) {
         }
     });
 
-    // Quantity decrease handler
+    
     $(document).off('click', '.qty-dec').on('click', '.qty-dec', function () {
         const group = $(this).closest('.qty-group');
         const id = group.data('id');
@@ -887,7 +896,6 @@ function updateOrderDetails(tableTitle) {
         }
     });
 
-    // Quantity increase handler
     $(document).off('click', '.qty-inc').on('click', '.qty-inc', function () {
         const group = $(this).closest('.qty-group');
         const id = group.data('id');
@@ -899,10 +907,12 @@ function updateOrderDetails(tableTitle) {
         order.pendingFullPortion = (order.pendingFullPortion !== undefined ? order.pendingFullPortion : order.fullPortion) + 1;
         input.val(order.pendingFullPortion);
 
-        // Mark order as modified but don't update backend yet
+        
         markOrderAsModified(order);
     });
 
+    
+    updateConfirmOrderBtn(parseInt($('.modal-title').text().replace('Table', '')));
 
 }
 $(document).on('click', '.accept-order-row-btn', function () {
@@ -925,7 +935,6 @@ $(document).on('click', '.accept-order-row-btn', function () {
     }
 });
 
-// Complete order event handler
 $(document).off('click', '.complete-order-row-btn').on('click', '.complete-order-row-btn', function () {
 
     const id = $(this).data('id');
@@ -948,12 +957,10 @@ $(document).on('click', '.payment-option', function () {
     $('#paymentError').removeClass('active');
 });
 
-// Cancel button
 $(document).on('click', '#cancelPayment', function () {
     closePaymentModal();
 });
 
-// Confirm button
 $(document).on('click', '#confirmPayment', function () {
     if (!selectedPaymentMode) {
         $('#paymentError').addClass('active');
@@ -977,7 +984,7 @@ $(document).on('click', '#confirmPayment', function () {
     }
 });
 
-// Close on overlay click
+// Close on overlay  click
 $(document).on('click', '#paymentModal', function (e) {
     if (e.target.id === 'paymentModal') {
         closePaymentModal();
@@ -1026,7 +1033,7 @@ function updateOrderQuantity(order, callback) {
         contentType: 'application/json; charset=utf-8',
         data: JSON.stringify(payload),
         success: function () {
-            // Update local data
+            
             order.fullPortion = order.pendingFullPortion;
             delete order.pendingFullPortion;
 
@@ -1046,6 +1053,7 @@ function markOrderAsModified(order) {
 
 // Accept order (change status to Active) - ENHANCED with timing
 function acceptOrder(order, callback) {
+    
 
     const payload = {
         id: order.id,
@@ -1106,18 +1114,17 @@ function acceptOrder(order, callback) {
                         }
                     }
 
-                    // Also trigger universal beep
-                    //playBeep();
+                    
 
-                    // Set next reminder in 5 minutes
+                    
                     completionTimers[order.id] = setTimeout(completionReminder, 5 * 60 * 1000);
                 } else {
-                    // Order completed, clear timer
+                   
                     clearTimeout(completionTimers[order.id]);
                     delete completionTimers[order.id];
                     delete orderAcceptedTimes[order.id];
                 }
-            }, 10 * 60 * 1000); // 10 minutes
+            }, 10 * 60 * 1000); 
 
             refreshOrders();
             bindDynamicTable();
@@ -1131,9 +1138,11 @@ function acceptOrder(order, callback) {
     });
 }
 
+
 // Complete order (change status to Completed and move to history) - ENHANCED with cleanup
 function completeOrder(order, callback) {
 
+    stopBeep();
     const payload = {
         id: order.id,
         tableNo: order.tableNo,
@@ -1179,7 +1188,6 @@ function completeOrder(order, callback) {
             bindDynamicTable();
             updateStats();
 
-            // Check if beep should stop after completion
             setTimeout(() => {
                 checkAndStopBeepIfNoProblems();
             }, 100);
@@ -1274,6 +1282,8 @@ function deleteOrder(id) {
 }
 
 function updateConfirmOrderBtn(tableNo) {
+
+    
     const $btn = $('#confirmOrderBtn');
     const data = window.liveOrdersData || [];
     const tableOrders = data.filter(order => order.tableNo === tableNo && order.orderStatusId !== 3);
@@ -1312,7 +1322,7 @@ $(document).ready(function () {
     });
 
     // Initialize orders and auto-refresh
-    getOrdersFromRestaurant();
+    
     startAutoRefresh();
 });
 
@@ -1553,7 +1563,7 @@ function viewOrderDetails(orderId) {
     if (!order) return;
 
     // Update modal title
-    $('.modal-title').first().html(`Order #${order.orderId} ${order.platform.toUpperCase()}</span>`);
+    //$('.modal-title').first().html(`Order #${order.orderId} ${order.platform.toUpperCase()}</span>`);
 
     const content = `
         <div class="row">
@@ -1718,7 +1728,7 @@ function refreshAllPlatforms() {
 
     //getOrdersFromZomato();
     //getOrdersFromSwiggy();
-    getOrdersFromCoffee();
+    //getOrdersFromCoffee();
 }
 
 // UPDATE ORDER STATUS ON PLATFORM
@@ -2203,13 +2213,12 @@ $(document).on('click', '#btnViewHistory', function () {
     }, 300);
 });
 
-$(document).ready(function () {
+//$(document).ready(function () {
+
+//    // Auto refresh every 30 seconds
+//    //setInterval(function () {
+//    //    getOrdersFromCoffee(false);
+//    //}, 30000);
 
 
-    // Auto refresh every 30 seconds
-    setInterval(function () {
-        getOrdersFromCoffee(false);
-    }, 30000);
-
-
-});
+//});

@@ -221,7 +221,7 @@
         </div>
 
         <!-- Platform Tabs -->
-        <div class="platform-tabs">
+        @* <div class="platform-tabs">
             <button class="platform-tab active" data-platform="all" onclick="filterOrders('all')">
                 <div class="platform-indicator restaurant-indicator"></div>
                 All Orders
@@ -250,7 +250,7 @@
                     <p id="coffeeStatus" class="mt-2 text-success">Coffee Ordering: ON ☕</p>
                 </div>
             </div>
-        </div>
+        </div> *@
 
         <div class="orders-grid" id="ordersContainer">
             <!-- Orders will be loaded here dynamically -->
@@ -646,10 +646,10 @@
                 <div class="bill-footer">
                     <p><strong>🙏 Thank you for your order!</strong></p>
                     <p>Please keep this receipt for your records.</p>
-                    <p>For any queries, contact us at support@grillnshakes.com</p>
+                    <p>For any queries, contact us at +91 9702832030</p>
                     <p style="margin-top: 15px; font-size: 0.85em; color: #999;">
                         GST No: 27XXXXX1234X1ZX<br>
-                        FSSAI Lic. No: 12345678901234
+                        
                     </p>
                 </div>
             </div>
@@ -672,8 +672,7 @@
     // Download bill as PDF (simulated)
     function downloadBill() {
         
-         const element = document.getElementById('printable-bill');
-         html2pdf().from(element).save('bill-' + Date.now() + '.pdf');
+          window.downloadBill();
     }
 
    
