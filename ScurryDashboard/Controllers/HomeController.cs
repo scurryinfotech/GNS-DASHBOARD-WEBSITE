@@ -110,24 +110,42 @@ namespace ScurryDashboard.Controllers
         {
             var client = _httpClientFactory.CreateClient();
             var apiUrl = apiPort + "/api/Order/GetOrder?UserName=Grill_N_Shakes";
+
             string jwtToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkdyaWxsX05fU2hha2VzIiwibmJmIjoxNzYxOTEzOTIyLCJleHAiOjE3Njk2ODk5MjIsImlhdCI6MTc2MTkxMzkyMn0.03UaoHr4_jBpuAwCNacnteOxmt47aiiJdCilQsRihbs";
 
-            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
+            client.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
 
             try
             {
                 var response = await client.GetAsync(apiUrl);
                 var rawJson = await response.Content.ReadAsStringAsync();
+
                 var orders = JsonSerializer.Deserialize<List<OrderListModel>>(rawJson);
+
+                if (orders == null)
+                    return Json(new List<OrderListModel>());
+
+                
+                DateTime threeDaysAgo = DateTime.Now.AddDays(-2).Date;
+                DateTime today = DateTime.Now.Date;
+
+                orders = orders
+                    .Where(o => o.Date.Date >= threeDaysAgo && o.Date.Date <= today)
+                    .OrderByDescending(o => o.Id)
+                    .ToList();
+
                 return Json(orders);
             }
-
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error calling Order API");
                 return StatusCode(500, "Error calling Order API");
             }
         }
+
+
+
 
 
         [HttpPost]

@@ -175,8 +175,87 @@
                 box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
             }
 
+        /* Infinite Scroll Styles */
+        .table-container {
+            position: relative;
+            max-height: 600px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+            .table-container::-webkit-scrollbar {
+                width: 10px;
+            }
+
+            .table-container::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 10px;
+            }
+
+            .table-container::-webkit-scrollbar-thumb {
+                background: #888;
+                border-radius: 10px;
+            }
+
+                .table-container::-webkit-scrollbar-thumb:hover {
+                    background: #555;
+                }
+
+        #orderHistoryTable {
+            margin-bottom: 0;
+        }
+
+            #orderHistoryTable thead th {
+                position: sticky;
+                top: 0;
+                background: #f8f9fa;
+                z-index: 10;
+                box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4);
+            }
+
+        .loading-spinner {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+
+            .loading-spinner.active {
+                display: block;
+            }
+
+        .spinner-border {
+            width: 2rem;
+            height: 2rem;
+            border: 0.25em solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spinner-border 0.75s linear infinite;
+        }
+
+        keyframes spinner-border {
+            to
+
+        {
+            transform: rotate(360deg);
+        }
+
+        }
+
+        .no-more-data {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+            font-style: italic;
+            display: none;
+        }
+
+            .no-more-data.active {
+                display: block;
+            }
+
         media print {
-           
+            body *
 
         {
             visibility: hidden;
@@ -219,38 +298,6 @@
                 <span class="notification-badge" id="newOrdersBadge">0</span>
             </div>
         </div>
-
-        <!-- Platform Tabs -->
-        @* <div class="platform-tabs">
-            <button class="platform-tab active" data-platform="all" onclick="filterOrders('all')">
-                <div class="platform-indicator restaurant-indicator"></div>
-                All Orders
-            </button>
-            <button class="platform-tab zomato" data-platform="zomato" onclick="filterOrders('zomato')">
-                <div class="platform-indicator zomato-indicator"></div>
-                Zomato
-            </button>
-            <button class="platform-tab swiggy" data-platform="swiggy" onclick="filterOrders('swiggy')">
-                <div class="platform-indicator swiggy-indicator"></div>
-                Swiggy
-            </button>
-            <button class="platform-tab" data-platform="restaurant" onclick="filterOrders('restaurant')">
-                <div class="platform-indicator restaurant-indicator"></div>
-                Restaurant
-            </button>
-            <div id="status">
-                <button id="zomatoBtn">Disconnect Zomato</button>
-                <p>Zomato: <span id="zomatoStatus">Connected</span></p>
-
-                <button id="swiggyBtn">Disconnect Swiggy</button>
-                <p>Swiggy: <span id="swiggyStatus">Connected</span></p>
-
-                <div class="online-status-section text-center mt-3">
-                    <button id="coffeeBtn" class="btn connect">Turn OFF Coffee Orders</button>
-                    <p id="coffeeStatus" class="mt-2 text-success">Coffee Ordering: ON ☕</p>
-                </div>
-            </div>
-        </div> *@
 
         <div class="orders-grid" id="ordersContainer">
             <!-- Orders will be loaded here dynamically -->
@@ -332,12 +379,32 @@
         </div>
     </div>
 
-    <!-- Order History Section -->
-    <h4 class="mt-4 text-success">
-        <i class="fas fa-history"></i> Order History
-    </h4>
+    <!-- Revenue Display Section -->
+    <div class="alert alert-info">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-1"><i class="fas fa-chart-line"></i> Revenue Summary</h5>
+                <p class="mb-0" id="revenueDateRange">Today's Revenue</p>
+            </div>
+            <div class="text-right">
+                <h3 class="mb-0" id="totalRevenue">₹0.00</h3>
+                <small id="orderCount">0 Orders</small>
+            </div>
+        </div>
+    </div>
 
-    <div class="table-responsive">
+    <!-- Order History Section with Infinite Scroll -->
+   
+    <div class="d-flex align-items-center mb-3" style="gap: 12px;">
+    <input type="date" id="startDate" class="form-control" style="width: 180px;" />
+    <input type="date" id="endDate" class="form-control" style="width: 180px;" />
+
+    <button id="btnFilter" class="btn btn-primary">Filter</button>
+    <button id="btnClear" class="btn btn-secondary">Clear</button>
+</div>
+
+
+    <div class="table-container" id="tableContainer">
         <table id="orderHistoryTable" class="table table-bordered table-striped">
             <thead class="thead-light">
                 <tr>
@@ -357,6 +424,15 @@
                 <!-- History rows will appear here -->
             </tbody>
         </table>
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <p class="mt-2">Loading more orders...</p>
+        </div>
+        <div class="no-more-data" id="noMoreData">
+            <p>📋 No more orders to load</p>
+        </div>
     </div>
 
     <!-- Bill Modal -->
@@ -384,19 +460,145 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    // Coffee ON/OFF toggle
-    let isCoffeeActive = false;
+
+     let isCoffeeActive = false;
+    let currentPage = 1;
+    let pageSize = 20;
+    let isLoading = false;
+    let hasMoreData = true;
+    let allOrdersData = [];
+    let filteredOrdersData = []; // Store filtered results
 
     $(document).ready(function () {
         initializeCoffeeUI();
-        loadOrderHistory();
+
+        // Set today's date as default
+        setTodayDate();
+
+        // Load today's orders by default
+        loadOrderHistory(true);
+
+        // Refresh every 5 seconds
+        setInterval(function(){
+            loadOrderHistory(true);
+        }, 5000);
+
+        setupInfiniteScroll();
 
         $('#coffeeBtn').on('click', function () {
             isCoffeeActive = !isCoffeeActive;
             updateCoffeeUI();
             toggleCoffeeAvailability(isCoffeeActive);
         });
+
+        // Filter button event
+        $('#btnFilter').on('click', function () {
+            applyDateFilter();
+        });
+
+        // Clear button event
+        $('#btnClear').on('click', function () {
+            clearDateFilter();
+        });
     });
+
+    // Set today's date in date inputs
+    function setTodayDate() {
+        const today = new Date();
+        const dateString = today.toISOString().split('T')[0];
+        $('#startDate').val(dateString);
+        $('#endDate').val(dateString);
+    }
+
+    // Calculate and display revenue
+    function calculateRevenue(orders) {
+        if (!orders || orders.length === 0) {
+            $('#totalRevenue').text('₹0.00');
+            $('#orderCount').text('0 Orders');
+            return;
+        }
+
+        // Group by order ID to count unique orders
+        const uniqueOrders = {};
+        let totalRevenue = 0;
+
+        orders.forEach(order => {
+            if (!uniqueOrders[order.orderId]) {
+                uniqueOrders[order.orderId] = true;
+            }
+            totalRevenue += (Number(order.price) || 0);
+        });
+
+        const orderCount = Object.keys(uniqueOrders).length;
+
+        $('#totalRevenue').text(`₹${totalRevenue.toFixed(2)}`);
+        $('#orderCount').text(`${orderCount} Order${orderCount !== 1 ? 's' : ''}`);
+    }
+
+    // Update revenue date range text
+    function updateRevenueDateRange(startDate, endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(0, 0, 0, 0);
+
+        if (start.getTime() === today.getTime() && end.getTime() === today.getTime()) {
+            $('#revenueDateRange').text("Today's Revenue");
+        } else if (start.getTime() === end.getTime()) {
+            $('#revenueDateRange').text(`Revenue for ${start.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`);
+        } else {
+            $('#revenueDateRange').text(`Revenue from ${start.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} to ${end.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`);
+        }
+    }
+
+    // Apply date filter
+    function applyDateFilter() {
+        const start = $('#startDate').val();
+        const end = $('#endDate').val();
+
+        if (!start || !end) {
+            alert("Please select both start and end dates");
+            return;
+        }
+
+        const startDate = new Date(start);
+        startDate.setHours(0, 0, 0, 0);
+
+        const endDate = new Date(end);
+        endDate.setHours(23, 59, 59, 999);
+
+        if (startDate > endDate) {
+            alert("Start date cannot be after end date");
+            return;
+        }
+
+        // Filter the data
+        filteredOrdersData = allOrdersData.filter(order => {
+            const orderDate = new Date(order.date);
+            return orderDate >= startDate && orderDate <= endDate;
+        });
+
+        // Update revenue display
+        updateRevenueDateRange(start, end);
+        calculateRevenue(filteredOrdersData);
+
+        // Reset pagination and display filtered results
+        currentPage = 1;
+        hasMoreData = true;
+        $('#orderHistoryTable tbody').empty();
+        $('#noMoreData').removeClass('active');
+
+        displayOrdersPage(filteredOrdersData);
+    }
+
+    // Clear filter and show today's orders
+    function clearDateFilter() {
+        setTodayDate();
+        applyDateFilter();
+    }
 
     function initializeCoffeeUI() {
         $.ajax({
@@ -453,38 +655,100 @@
         });
     }
 
-    // Load order history
-    function loadOrderHistory() {
+    function setupInfiniteScroll() {
+        const container = $('#tableContainer');
+
+        container.on('scroll', function() {
+            if (isLoading || !hasMoreData) return;
+
+            const scrollTop = container.scrollTop();
+            const scrollHeight = container[0].scrollHeight;
+            const clientHeight = container.height();
+
+            if (scrollTop + clientHeight >= scrollHeight - 100) {
+                loadMoreOrders();
+            }
+        });
+    }
+
+    function loadOrderHistory(isInitial = false) {
+        if (isInitial) {
+            currentPage = 1;
+            hasMoreData = true;
+        }
+
+        isLoading = true;
+        $('#loadingSpinner').addClass('active');
+
         $.ajax({
             url: '/Home/GetOrderHistory',
             type: 'GET',
             success: function (data) {
-                bindOrderHistory(data);
+                allOrdersData = data || [];
+
+                // Apply today's filter by default
+                const start = $('#startDate').val();
+                const end = $('#endDate').val();
+
+                if (start && end) {
+                    const startDate = new Date(start);
+                    startDate.setHours(0, 0, 0, 0);
+
+                    const endDate = new Date(end);
+                    endDate.setHours(23, 59, 59, 999);
+
+                    filteredOrdersData = allOrdersData.filter(order => {
+                        const orderDate = new Date(order.date);
+                        return orderDate >= startDate && orderDate <= endDate;
+                    });
+                } else {
+                    filteredOrdersData = allOrdersData;
+                }
+
+                if (isInitial) {
+                    $('#orderHistoryTable tbody').empty();
+                    updateRevenueDateRange(start, end);
+                }
+
+                calculateRevenue(filteredOrdersData);
+                displayOrdersPage(filteredOrdersData);
+
+                isLoading = false;
+                $('#loadingSpinner').removeClass('active');
             },
             error: function (xhr, status, error) {
                 console.error('Error loading order history:', error);
                 $('#orderHistoryTable tbody').html(`
                     <tr><td colspan="10" class="text-center text-danger">Failed to load order history</td></tr>
                 `);
+                isLoading = false;
+                $('#loadingSpinner').removeClass('active');
+                hasMoreData = false;
             }
         });
     }
 
-    // Bind order history to table
-    function bindOrderHistory(data) {
-        const tbody = $('#orderHistoryTable tbody');
-        tbody.empty();
+    function loadMoreOrders() {
+        if (isLoading || !hasMoreData) return;
+        currentPage++;
+        displayOrdersPage(filteredOrdersData);
+    }
 
-        if (!data || data.length === 0) {
-            tbody.append(`
-                <tr><td colspan="10" class="text-center text-muted">No completed orders yet.</td></tr>
-            `);
+    function displayOrdersPage(dataToDisplay = filteredOrdersData) {
+        if (!dataToDisplay || dataToDisplay.length === 0) {
+            if (currentPage === 1) {
+                $('#orderHistoryTable tbody').html(`
+                    <tr><td colspan="10" class="text-center text-muted">No orders found for the selected date range.</td></tr>
+                `);
+            }
+            hasMoreData = false;
+            $('#noMoreData').addClass('active');
             return;
         }
 
         // Group orders by orderId
         const groupedOrders = {};
-        data.forEach(order => {
+        dataToDisplay.forEach(order => {
             if (!groupedOrders[order.orderId]) {
                 groupedOrders[order.orderId] = [];
             }
@@ -494,15 +758,32 @@
         // Sort order IDs in descending order (newest first)
         const sortedOrderIds = Object.keys(groupedOrders).sort((a, b) => b - a);
 
-        // Display one row per order
-        sortedOrderIds.forEach(orderId => {
+        // Calculate pagination
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const ordersToDisplay = sortedOrderIds.slice(startIndex, endIndex);
+
+        // Check if we have more data
+        if (endIndex >= sortedOrderIds.length) {
+            hasMoreData = false;
+            $('#noMoreData').addClass('active');
+        }
+
+        if (ordersToDisplay.length === 0) {
+            hasMoreData = false;
+            $('#noMoreData').addClass('active');
+            return;
+        }
+
+        const tbody = $('#orderHistoryTable tbody');
+
+        ordersToDisplay.forEach(orderId => {
             const orders = groupedOrders[orderId];
             const firstOrder = orders[0];
             const totalItems = orders.length;
             const totalAmount = orders.reduce((sum, order) => sum + (Number(order.price) || 0), 0);
             const date = new Date(firstOrder.date).toLocaleString('en-IN');
 
-            // Safely encode JSON for embedding in a data- attribute
             const ordersJsonEncoded = encodeURIComponent(JSON.stringify(orders));
 
             const row = `
@@ -527,7 +808,7 @@
         });
     }
 
-    
+    // Keep all your existing functions for viewing orders, printing, etc.
     $(document).on('click', '.btn-view-order', function () {
         const encoded = $(this).attr('data-orders');
         if (!encoded) {
@@ -542,10 +823,8 @@
             alert('Failed to load order details');
         }
     });
-    
-    // View order details
+
     function viewOrderDetailss(orders) {
-        
         if (!orders || orders.length === 0) {
             alert('No order details available');
             return;
@@ -561,12 +840,10 @@
             minute: '2-digit'
         });
 
-        // Generate items HTML
         let itemsHtml = '';
         orders.forEach((order, index) => {
             const halfQty = Number(order.halfPortion) || 0;
             const fullQty = Number(order.fullPortion) || 0;
-            const totalQty = halfQty + fullQty;
             const qtyText = halfQty > 0 && fullQty > 0
                 ? `${halfQty} Half + ${fullQty} Full`
                 : halfQty > 0
@@ -581,7 +858,6 @@
             `;
         });
 
-        // Calculate tax (assuming 5% GST)
         const tax = totalAmount * 0.05;
         const subtotal = totalAmount - tax;
 
@@ -649,7 +925,6 @@
                     <p>For any queries, contact us at +91 9702832030</p>
                     <p style="margin-top: 15px; font-size: 0.85em; color: #999;">
                         GST No: 27XXXXX1234X1ZX<br>
-                        
                     </p>
                 </div>
             </div>
@@ -659,33 +934,31 @@
         $('#bill-modal').fadeIn(300);
     }
 
-    // Close bill modal
     function closeBillModal() {
         $('#bill-modal').fadeOut(300);
     }
 
-    // Print bill
     function printBill() {
         window.print();
     }
 
-    // Download bill as PDF (simulated)
     function downloadBill() {
-        
-          window.downloadBill();
+        if (typeof window.downloadBill === 'function') {
+            window.downloadBill();
+        } else {
+            alert('PDF download functionality not available');
+        }
     }
 
-   
     $(document).on('click', '#bill-modal', function(e) {
         if (e.target.id === 'bill-modal') {
             closeBillModal();
         }
     });
 
-    // ESC key to close modal
     $(document).keyup(function(e) {
         if (e.key === "Escape") {
             closeBillModal();
         }
     });
-</script>
+</script> 

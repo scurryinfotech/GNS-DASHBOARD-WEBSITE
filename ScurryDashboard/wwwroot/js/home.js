@@ -212,6 +212,7 @@ $(document).ready(function () {
 
     setInterval(function () {
         loadTableOrders(false);
+        
     }, 3000);
     loadTableCount();
 
