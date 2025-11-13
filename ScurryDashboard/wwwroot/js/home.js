@@ -283,21 +283,18 @@ $(document).ready(function () {
                 return;
             }
 
-            let completedCompletes = 0;
-            const totalCompletes = activeOrders.length;
+         
+            currentOrderData = activeOrders.map(o => o.id);   // store all active orders
+            
 
-            activeOrders.forEach(order => {
-                completeOrder(order, function () {
-                    completedCompletes++;
-                    if (completedCompletes === totalCompletes) {
-                        showSuccessMessage(`Completed ${totalCompletes} order(s) for Table ${tableNo}!`);
-                       
-                        updateConfirmOrderBtn(tableNo);
-                        updateOrderDetails(tableTitle);
-                    }
-                });
-            });
+            // Reset modal UI
+            $('.payment-option').removeClass('selected');
+            $('#confirmPayment').prop('disabled', true);
+            $('#paymentError').removeClass('active');
+
+            $('#paymentModal').addClass('active');
         }
+
     });
 
 
@@ -936,8 +933,7 @@ $(document).on('click', '.accept-order-row-btn', function () {
     }
 });
 
-$(document).off('click', '.complete-order-row-btn').on('click', '.complete-order-row-btn', function () {
-
+$(document).on('click', '.complete-order-row-btn', function () {
     const id = $(this).data('id');
     let order = (window.liveOrdersData || []).find(o => o.id === id);
 
@@ -946,16 +942,25 @@ $(document).off('click', '.complete-order-row-btn').on('click', '.complete-order
         return;
     }
 
-    // Open payment mode selection modal
+    
     openPaymentModal(id, order);
 });
 
-$(document).on('click', '.payment-option', function () {
+
+$(document).on('click', '.payment-option', function (e) {
+    e.stopPropagation(); 
     $('.payment-option').removeClass('selected');
     $(this).addClass('selected');
-    selectedPaymentMode = $(this).data('mode');
-    $('#confirmPayment').prop('disabled', false);
-    $('#paymentError').removeClass('active');
+
+    // Prefer attribute read as a fallback
+    const modeAttr = $(this).attr('data-mode');
+    const modeData = $(this).data('mode');
+    selectedPaymentMode = modeAttr ?? modeData ?? null;
+
+    console.log('DEBUG: payment-option clicked. data-mode attr=', modeAttr, ' .data()=', modeData, ' => selectedPaymentMode=', selectedPaymentMode);
+
+    $('#confirmPayment').prop('disabled', !selectedPaymentMode);
+    $('#paymentError').toggleClass('active', !selectedPaymentMode);
 });
 
 $(document).on('click', '#cancelPayment', function () {
@@ -963,27 +968,53 @@ $(document).on('click', '#cancelPayment', function () {
 });
 
 $(document).on('click', '#confirmPayment', function () {
+
     if (!selectedPaymentMode) {
         $('#paymentError').addClass('active');
         return;
     }
 
+    // Preserve selection and clone current order ids BEFORE closing modal (closePaymentModal clears currentOrderData)
+    const mode = selectedPaymentMode;
+    const ids = (currentOrderData || []).map(x => {
+        if (typeof x === 'object' && x !== null) return x.id;
+        return x;
+    }).filter(Boolean);
+
+    if (ids.length === 0) {
+        showSuccessMessage('No orders selected to complete!');
+        return;
+    }
+
+    if (!confirm('Are you sure you want to complete this order?')) {
+        return;
+    }
+
+    // Prevent double clicks while processing
+    $('#confirmPayment').prop('disabled', true);
+
+    // Close UI (we already copied necessary data)
     closePaymentModal();
 
-    if (confirm('Are you sure you want to complete this order?')) {
+    console.log("Payment mode selected:", mode);
 
-        let order = (window.liveOrdersData || []).find(o => o.id === currentOrderId);
+    const ordersToComplete = ids
+        .map(id => (window.liveOrdersData || []).find(o => o.id === id))
+        .filter(o => o);
 
+    ordersToComplete.forEach(order => {
         if (order) {
-            order.paymentMode = selectedPaymentMode;
+            order.paymentMode = mode;
+
             completeOrder(order, function () {
                 updateOrderDetails($('.modal-title').text());
             });
-        } else {
-            alert('Order not found');
         }
-    }
+    });
+
 });
+
+
 
 // Close on overlay  click
 $(document).on('click', '#paymentModal', function (e) {
@@ -992,9 +1023,10 @@ $(document).on('click', '#paymentModal', function (e) {
     }
 });
 function openPaymentModal(orderId, orderData) {
+    debugger
 
     currentOrderId = orderId;
-    currentOrderData = orderData;
+    currentOrderData = [orderData.id];
     selectedPaymentMode = null;
 
     $('.payment-option').removeClass('selected');
@@ -1006,8 +1038,8 @@ function openPaymentModal(orderId, orderData) {
 function closePaymentModal() {
     $('#paymentModal').removeClass('active');
     selectedPaymentMode = null;
-    //currentOrderId = null;
-    //currentOrderData = null;
+    currentOrderId = null;
+    currentOrderData = null;
 }
 // Update order quantity
 function updateOrderQuantity(order, callback) {
@@ -1156,7 +1188,8 @@ function completeOrder(order, callback) {
         date: order.date,
         isActive: order.isActive,
         orderId: order.orderId,
-        PaymentMode: order.paymentMode
+        paymentMode: order.paymentMode
+
     };
 
     $.ajax({

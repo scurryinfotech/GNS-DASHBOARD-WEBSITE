@@ -61,7 +61,7 @@ namespace ScurryDashboard.Controllers
                 var response = await client.GetAsync(apiUrl);
                 response.EnsureSuccessStatusCode();
                 var rawJson = await response.Content.ReadAsStringAsync();
-                // Assuming the API returns a number or { "count": 6 }
+                
                 return Content(rawJson, "application/json");
             }
             catch (Exception ex)
