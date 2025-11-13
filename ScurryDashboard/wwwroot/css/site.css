@@ -30,6 +30,12 @@
         white-space: nowrap;
     }
 }
+#bill-content {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
 
 /* For very small screens */
 @media (max-width: 480px) {

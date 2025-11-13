@@ -32,7 +32,7 @@ function dateKeyFromISO(iso) {
 
     const d = new Date(normalized);
     if (isNaN(d)) {
-        console.warn("Invalid completedAt date:", iso);
+       
         return "";
     }
 
@@ -71,7 +71,7 @@ $(document).on("click keydown touchstart", function unlockAudio() {
                 testAudio.pause();
                 testAudio.currentTime = 0;
                 audioUnlocked = true;
-                console.log("✅ Audio unlocked — future playbacks allowed");
+                
             })
             .catch(err => console.warn("⚠️ Audio unlock blocked:", err));
 
@@ -98,12 +98,12 @@ function playBeep() {
         if (playPromise !== undefined) {
             playPromise
                 .then(() => {
-                    console.log('Beep started');
+                    
                     isBeepPlaying = true;
                     showStopBeepButton();
                 })
                 .catch(err => {
-                    console.warn('Audio play blocked by browser:', err);
+                    
                     isBeepPlaying = false;
                 });
         }
@@ -996,7 +996,7 @@ $(document).on('click', '#confirmPayment', function () {
     // Close UI (we already copied necessary data)
     closePaymentModal();
 
-    console.log("Payment mode selected:", mode);
+    
 
     const ordersToComplete = ids
         .map(id => (window.liveOrdersData || []).find(o => o.id === id))
@@ -1790,11 +1790,11 @@ function updateZomatoOrderStatus(orderId, status) {
             status: mapToZomatoStatus(status)
         }),
         success: function (data) {
-            console.log('Zomato order status updated successfully');
+            
             showNotification(`Zomato order #${orderId} status updated`, 'success');
         },
         error: function (xhr, status, error) {
-            console.error('Failed to update Zomato order status:', error);
+            
             showNotification(`Failed to update Zomato order #${orderId}`, 'error');
         }
     });
@@ -1813,11 +1813,11 @@ function updateSwiggyOrderStatus(orderId, status) {
             order_status: mapToSwiggyStatus(status)
         }),
         success: function (data) {
-            console.log('Swiggy order status updated successfully');
+           
             showNotification(`Swiggy order #${orderId} status updated`, 'success');
         },
         error: function (xhr, status, error) {
-            console.error('Failed to update Swiggy order status:', error);
+            
             showNotification(`Failed to update Swiggy order #${orderId}`, 'error');
         }
     });
@@ -1838,14 +1838,13 @@ function updateRestaurantOrderStatus(orderId, status) {
     // compute numericStatus first
     const numericStatus = statusMap[status] ?? null;
 
-    // use exact property names that match your UpdateonlineOrder JSON names
+    
     const payload = {
         orderId: String(orderId),
         orderStatus: numericStatus
     };
 
-    // debug: verify payload sent
-    console.log('UpdateOnlineStatus payload:', payload);
+   
 
     $.ajax({
         url: '/Home/UpdateOnlineStatus',
@@ -1853,7 +1852,7 @@ function updateRestaurantOrderStatus(orderId, status) {
         contentType: 'application/json; charset=utf-8',
         data: JSON.stringify(payload),
         success: function (data) {
-            console.log('Restaurant order status updated successfully');
+            
 
             const messages = {
                 'Active': 'Order accepted and confirmed',
@@ -1864,7 +1863,7 @@ function updateRestaurantOrderStatus(orderId, status) {
             showNotification(messages[status] || 'Order updated', 'success');
         },
         error: function (xhr, statusText, error) {
-            console.error('Failed to update restaurant order status:', statusText, error);
+            
             showNotification(`Failed to update order #${orderId}`, 'error');
         }
     });
@@ -1901,7 +1900,7 @@ function rejectOrder(orderId) {
                 platform: order.platform
             }),
             success: function (data) {
-                console.log('Order rejection confirmed on backend');
+               
             },
             error: function (xhr, status, error) {
                 console.error('Failed to reject order on backend:', error);
@@ -1968,7 +1967,7 @@ function startAutoRefresh() {
             if (isSwiggyActive) platforms.push('swiggy');
 
             if (platforms.length === 0) {
-                console.log('Both platforms are disconnected. No dummy orders will be generated.');
+             
                 return;
             }
 
@@ -2150,7 +2149,7 @@ function getOrdersFromCoffee() {
 
 
 function updateCoffeeOrderStatus(orderId, newStatus) {
-    console.log(`Updating coffee order ${orderId} to status: ${newStatus}`);
+  
 
     const orderIndex = ordersData.findIndex(o => o.orderId === orderId);
     if (orderIndex === -1) {

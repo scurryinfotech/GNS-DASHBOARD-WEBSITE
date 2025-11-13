@@ -69,11 +69,17 @@
             overflow-y: auto;
         }
 
+        #bill-content {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
         .bill {
             font-family: 'Courier New', monospace;
             background: white;
-            padding: 30px;
-            border: 2px solid #333;
+            padding: 10px;
+            border: 1px solid #000;
         }
 
         .bill-header {
@@ -445,7 +451,7 @@
             <div id="bill-content">
                 <!-- Bill content will be generated here -->
             </div>
-            <div style="text-align: center; margin-top: 20px; gap: 10px; display: flex; justify-content: center; padding: 20px;">
+            <div style="text-align: center;  display: flex; justify-content: center;">
                 <button class="btn-print" onclick="printBill()">
                     🖨️ Print Physical Bill
                 </button>
@@ -858,77 +864,59 @@
             `;
         });
 
-        const tax = totalAmount * 0.05;
-        const subtotal = totalAmount - tax;
+        
+        const subtotal = totalAmount ;
 
-        const billHtml = `
-            <div class="bill" id="printable-bill">
-                <div class="bill-header">
-                    <div class="restaurant-name">Grill N Shakes</div>
-                    <div class="restaurant-info">📍 123 Restaurant Street, Ulwe</div>
-                    <div class="restaurant-info">📞 Phone: +91-XXXX-XXXXXX</div>
-                    <div class="restaurant-info">🌐 www.grillnshakes.com</div>
-                </div>
+            const billHtml = `
+    <div class="bill" id="printable-bill" style="font-family: Arial; width:260px;">
 
-                <div class="bill-details">
-                    <div class="bill-row">
-                        <span><strong>Order ID:</strong></span>
-                        <span>#${firstOrder.orderId}</span>
-                    </div>
-                    <div class="bill-row">
-                        <span><strong>Date & Time:</strong></span>
-                        <span>${date}</span>
-                    </div>
-                    <div class="bill-row">
-                        <span><strong>Customer:</strong></span>
-                        <span>${firstOrder.customerName || 'Walk-in Customer'}</span>
-                    </div>
-                    <div class="bill-row">
-                        <span><strong>Phone:</strong></span>
-                        <span>${firstOrder.phone || 'N/A'}</span>
-                    </div>
-                    <div class="bill-row">
-                        <span><strong>Table No:</strong></span>
-                        <span>${firstOrder.tableNo || 'N/A'}</span>
-                    </div>
-                    <div class="bill-row">
-                        <span><strong>Payment Mode:</strong></span>
-                        <span><span style="display: inline-block; padding: 2px 8px; background: #28a745; color: white; border-radius: 3px; font-size: 12px;">${firstOrder.paymentMode || 'CASH'}</span></span>
-                    </div>
-                </div>
+        <!-- Header -->
+        <div style="text-align:center; border-bottom:1px dashed #000; padding-bottom:6px;">
+            <div style="font-size:18px; font-weight:bold;">Grill N Shakes</div>
+            <div style="font-size:11px;">123 Restaurant Street, Ulwe</div>
+            <div style="font-size:11px;">📞 +91-XXXX-XXXXXX</div>
+        </div>
 
-                <div class="bill-items">
-                    <div style="border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 15px;">
-                        <strong>📋 ORDER ITEMS (${orders.length})</strong>
-                    </div>
-                    ${itemsHtml}
-                </div>
+        <!-- Order Details -->
+        <div style="margin-top:6px; font-size:12px;">
+            <div><strong>Order:</strong> #${firstOrder.orderId}</div>
+            <div><strong>Date:</strong> ${date}</div>
+            <div><strong>Name:</strong> ${firstOrder.customerName || 'Walk-in'}</div>
+            <div><strong>Phone:</strong> ${firstOrder.phone || 'N/A'}</div>
+            <div><strong>Table:</strong> ${firstOrder.tableNo || 'N/A'}</div>
+            <div><strong>Pay:</strong> ${firstOrder.paymentMode || 'CASH'}</div>
+        </div>
 
-                <div class="bill-total">
-                    <div class="bill-row" style="margin-bottom: 8px;">
-                        <span>Subtotal:</span>
-                        <span>₹${subtotal.toFixed(2)}</span>
-                    </div>
-                    <div class="bill-row" style="margin-bottom: 8px;">
-                        <span>GST (5%):</span>
-                        <span>₹${tax.toFixed(2)}</span>
-                    </div>
-                    <div class="bill-row" style="font-size: 1.3em; margin-top: 10px; padding-top: 10px; border-top: 2px solid #333;">
-                        <span>GRAND TOTAL:</span>
-                        <span>₹${totalAmount.toFixed(2)}</span>
-                    </div>
-                </div>
-
-                <div class="bill-footer">
-                    <p><strong>🙏 Thank you for your order!</strong></p>
-                    <p>Please keep this receipt for your records.</p>
-                    <p>For any queries, contact us at +91 9702832030</p>
-                    <p style="margin-top: 15px; font-size: 0.85em; color: #999;">
-                        GST No: 27XXXXX1234X1ZX<br>
-                    </p>
-                </div>
+        <!-- Items -->
+        <div style="border-top:1px dashed #000; margin-top:6px; padding-top:6px;">
+            <strong style="font-size:13px;">Items (${orders.length})</strong>
+            <div style="margin-top:4px; font-size:12px;">
+                ${itemsHtml}
             </div>
-        `;
+        </div>
+
+        <!-- Totals -->
+        <div style="border-top:1px dashed #000; margin-top:6px; padding-top:6px; font-size:13px;">
+            <div style="display:flex; justify-content:space-between;">
+                <span>Subtotal</span>
+                <span>₹${subtotal.toFixed(2)}</span>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px; margin-top:4px;">
+                <span>Total</span>
+                <span>₹${totalAmount.toFixed(2)}</span>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align:center; margin-top:8px; font-size:11px; border-top:1px dashed #000; padding-top:6px;">
+            <div>🙏 Thank you!</div>
+            <div>GST: 27XXXXX1234X1ZX</div>
+        </div>
+
+    </div>
+    `;
+
 
         $('#bill-content').html(billHtml);
         $('#bill-modal').fadeIn(300);
