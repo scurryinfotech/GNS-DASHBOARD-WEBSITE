@@ -105,11 +105,39 @@ namespace ScurryDashboard.Controllers
             return StatusCode((int)response.StatusCode, "Failed to update order");
         }
 
+
+
+        [HttpPost]
+        public async Task<IActionResult> SaveOrderSummary([FromBody] OrderSummaryModel summary)
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+
+                var apiUrl = "https://localhost:7104/api/Order/SaveOrderSummary";
+                var json = JsonSerializer.Serialize(summary);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await client.PostAsync(apiUrl, content);
+
+                if (response.IsSuccessStatusCode)
+                    return Ok("Summary saved");
+
+                return StatusCode((int)response.StatusCode, "Failed to save summary");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error: " + ex.Message);
+            }
+        }
+
+
         [HttpGet]
         public async Task<IActionResult> GetOrderHistory()
         {
             var client = _httpClientFactory.CreateClient();
-            var apiUrl = apiPort + "/api/Order/GetOrder?UserName=Grill_N_Shakes";
+            var apiUrl = apiPort + "/api/Order/GetOrderHistory?username=Grill_N_Shakes";
+
 
             string jwtToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkdyaWxsX05fU2hha2VzIiwibmJmIjoxNzYxOTEzOTIyLCJleHAiOjE3Njk2ODk5MjIsImlhdCI6MTc2MTkxMzkyMn0.03UaoHr4_jBpuAwCNacnteOxmt47aiiJdCilQsRihbs";
 
@@ -121,19 +149,18 @@ namespace ScurryDashboard.Controllers
                 var response = await client.GetAsync(apiUrl);
                 var rawJson = await response.Content.ReadAsStringAsync();
 
-                var orders = JsonSerializer.Deserialize<List<OrderListModel>>(rawJson);
+                var orders = JsonSerializer.Deserialize<List<OrderHistoryModel>>(rawJson,
+                  new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
 
                 if (orders == null)
-                    return Json(new List<OrderListModel>());
+                    return Json(new List<OrderHistoryModel>());
 
                 
                 DateTime threeDaysAgo = DateTime.Now.AddDays(-2).Date;
                 DateTime today = DateTime.Now.Date;
 
-                orders = orders
-                    .Where(o => o.Date.Date >= threeDaysAgo && o.Date.Date <= today)
-                    .OrderByDescending(o => o.Id)
-                    .ToList();
+                
 
                 return Json(orders);
             }
@@ -143,6 +170,19 @@ namespace ScurryDashboard.Controllers
                 return StatusCode(500, "Error calling Order API");
             }
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetBillData(string orderId)
+        {
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.GetAsync(
+                $"https://localhost:7104/api/Order/GetBillByOrderId?orderId={orderId}"
+            );
+
+            string json = await response.Content.ReadAsStringAsync();
+            return Content(json, "application/json");
+        }
+
 
 
 

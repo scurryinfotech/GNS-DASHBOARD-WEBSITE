@@ -957,8 +957,6 @@ $(document).on('click', '.payment-option', function (e) {
     const modeData = $(this).data('mode');
     selectedPaymentMode = modeAttr ?? modeData ?? null;
 
-    console.log('DEBUG: payment-option clicked. data-mode attr=', modeAttr, ' .data()=', modeData, ' => selectedPaymentMode=', selectedPaymentMode);
-
     $('#confirmPayment').prop('disabled', !selectedPaymentMode);
     $('#paymentError').toggleClass('active', !selectedPaymentMode);
 });
@@ -967,6 +965,7 @@ $(document).on('click', '#cancelPayment', function () {
     closePaymentModal();
 });
 
+
 $(document).on('click', '#confirmPayment', function () {
 
     if (!selectedPaymentMode) {
@@ -974,8 +973,12 @@ $(document).on('click', '#confirmPayment', function () {
         return;
     }
 
-    // Preserve selection and clone current order ids BEFORE closing modal (closePaymentModal clears currentOrderData)
     const mode = selectedPaymentMode;
+
+    // Read discount value
+    const discount = parseInt($('#discountInput').val()) || 0;
+
+    // Collect item IDs
     const ids = (currentOrderData || []).map(x => {
         if (typeof x === 'object' && x !== null) return x.id;
         return x;
@@ -990,25 +993,58 @@ $(document).on('click', '#confirmPayment', function () {
         return;
     }
 
-    // Prevent double clicks while processing
     $('#confirmPayment').prop('disabled', true);
 
-    // Close UI (we already copied necessary data)
+   
     closePaymentModal();
-
-    
 
     const ordersToComplete = ids
         .map(id => (window.liveOrdersData || []).find(o => o.id === id))
         .filter(o => o);
 
-    ordersToComplete.forEach(order => {
-        if (order) {
-            order.paymentMode = mode;
+    let totalAmount = ordersToComplete.reduce((sum, item) => {
+        let qty = Number(item.halfPortion) + Number(item.fullPortion);
+        return sum + (qty * Number(item.price));
+    }, 0);
 
-            completeOrder(order, function () {
-                updateOrderDetails($('.modal-title').text());
+    let finalAmount = totalAmount - discount;
+
+    
+    let first = ordersToComplete[0];
+
+    
+
+    let summaryData = {
+        OrderId: first.orderId,
+        CustomerName: first.customerName || '',
+        Phone: first.phone || '',
+        TotalAmount: totalAmount,
+        DiscountAmount: discount,
+        FinalAmount: finalAmount
+    };
+
+    
+    $.ajax({
+        url: '/home/SaveOrderSummary',
+        type: 'POST',
+        contentType: 'application/json; charset=utf-8',
+        data: JSON.stringify(summaryData),
+        success: function () {
+
+           
+            ordersToComplete.forEach(order => {
+                if (order) {
+                    order.paymentMode = mode;
+
+                    completeOrder(order, function () {
+                        updateOrderDetails($('.modal-title').text());
+                    });
+                }
             });
+
+        },
+        error: function () {
+            showSuccessMessage('Error saving summary!');
         }
     });
 
@@ -1023,7 +1059,7 @@ $(document).on('click', '#paymentModal', function (e) {
     }
 });
 function openPaymentModal(orderId, orderData) {
-    debugger
+    
 
     currentOrderId = orderId;
     currentOrderData = [orderData.id];
@@ -1174,6 +1210,8 @@ function acceptOrder(order, callback) {
 
 // Complete order (change status to Completed and move to history) - ENHANCED with cleanup
 function completeOrder(order, callback) {
+
+    
 
     stopBeep();
     const payload = {

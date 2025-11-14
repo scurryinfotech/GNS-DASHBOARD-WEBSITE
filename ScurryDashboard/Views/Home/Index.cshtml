@@ -239,15 +239,7 @@
             animation: spinner-border 0.75s linear infinite;
         }
 
-        keyframes spinner-border {
-            to
-
-        {
-            transform: rotate(360deg);
-        }
-
-        }
-
+        
         .no-more-data {
             text-align: center;
             padding: 20px;
@@ -260,31 +252,178 @@
                 display: block;
             }
 
-        media print {
-            body *
+
+
+        /* FIX discount input not editable */
+        #paymentModal {
+            position: fixed !important;
+            z-index: 999999 !important;
+        }
+
+        .payment-modal {
+            position: relative !important;
+            z-index: 1000000 !important;
+        }
+
+
+        #bill-modal {
+            display: none !important;
+           
+        }
+
+        .loading-spinner {
+            pointer-events: none !important;
+        }
+
+        .table-container {
+            pointer-events: auto !important;
+        }
+
+        /* -------------------------
+           PAYMENT MODAL CLEAN STYLE
+        -------------------------- */
+
+        #paymentModal.payment-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+            #paymentModal.payment-modal-overlay.active {
+                display: flex;
+            }
+
+        .payment-modal {
+            background: #fff;
+            width: 420px;
+            padding: 25px;
+            border-radius: 10px;
+            animation: modalPop 0.25s ease-out;
+            box-shadow: 0px 4px 20px rgba(0,0,0,0.15);
+        }
+
+        @@keyframes modalPop {
+            from
 
         {
-            visibility: hidden;
+            transform: scale(0.85);
+            opacity: 0;
         }
 
-        #printable-bill, #printable-bill * {
-            visibility: visible;
+        to {
+            transform: scale(1);
+            opacity: 1;
         }
 
-        #printable-bill {
-            position: absolute;
-            left: 0;
-            top: 0;
+        }
+
+        .payment-modal-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .payment-options {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .payment-option {
+            border: 2px solid #ddd;
+            padding: 15px;
+            text-align: center;
+            border-radius: 12px;
+            width: 48%;
+            cursor: pointer;
+            transition: 0.2s;
+            background: #fafafa;
+        }
+
+            .payment-option:hover {
+                border-color: #00aaff;
+            }
+
+            .payment-option.selected {
+                border-color: #00aaff;
+                background: #e9f7ff;
+            }
+
+        .payment-icon {
+            font-size: 35px;
+            margin-bottom: 8px;
+        }
+
+        /* -------------------------
+           DISCOUNT INPUT FIX
+        -------------------------- */
+
+        #discountInput {
             width: 100%;
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 15px;
+            margin-top: 5px;
+            background: #fff;
+            box-sizing: border-box;
         }
 
-        #bill-modal .modal-header,
-        .btn-print,
-        .btn-view {
-            display: none !important;
+        /* FIX: Number input not typing */
+        input[type="number"] {
+            -webkit-appearance: none !important;
+            appearance: none !important;
+            overflow: visible !important;
         }
 
+        input::-webkit-inner-spin-button,
+        input::-webkit-outer-spin-button {
+            -webkit-appearance: none !important;
+            margin: 0 !important;
         }
+
+        /* Buttons */
+        .payment-modal-actions {
+            margin-top: 25px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .payment-btn {
+            padding: 10px 18px;
+            border-radius: 6px;
+            width: 48%;
+            border: none;
+            cursor: pointer;
+            font-size: 15px;
+            transition: 0.2s;
+        }
+
+        .payment-btn-cancel {
+            background: #f1f1f1;
+        }
+
+            .payment-btn-cancel:hover {
+                background: #e1e1e1;
+            }
+
+        .payment-btn-confirm {
+            background: #4CAF50;
+            color: #fff;
+        }
+
+            .payment-btn-confirm:disabled {
+                opacity: 0.4;
+                cursor: not-allowed;
+            }
+
+
     </style>
 }
 
@@ -361,12 +500,14 @@
                 <p>Choose how the customer paid for this order</p>
             </div>
 
+            <!-- PAYMENT OPTIONS -->
             <div class="payment-options">
                 <div class="payment-option" data-mode="cash">
                     <div class="payment-icon">💵</div>
                     <h4>Cash</h4>
                     <p>Paid in cash</p>
                 </div>
+
                 <div class="payment-option" data-mode="online">
                     <div class="payment-icon">💳</div>
                     <h4>Online</h4>
@@ -374,16 +515,32 @@
                 </div>
             </div>
 
+            <!-- DISCOUNT SECTION -->
+            <div style="margin: 20px 0; text-align: left;">
+                <label for="discountInput" style="font-weight:600; font-size:14px; display:block; margin-bottom:5px;">
+                    Discount (₹):
+                </label>
+                <input type="number"
+                       id="discountInput"
+                       placeholder="Enter discount amount"
+                       min="0"  style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+            </div>
+
+            <!-- ERROR MESSAGE -->
             <div class="payment-error" id="paymentError">
                 Please select a payment mode
             </div>
 
+            <!-- ACTION BUTTONS -->
             <div class="payment-modal-actions">
                 <button class="payment-btn payment-btn-cancel" id="cancelPayment">Cancel</button>
-                <button class="payment-btn payment-btn-confirm" id="confirmPayment" disabled>Complete Order</button>
+                <button class="payment-btn payment-btn-confirm" id="confirmPayment" disabled>
+                    Complete Order
+                </button>
             </div>
         </div>
     </div>
+
 
     <!-- Revenue Display Section -->
     <div class="alert alert-info">
@@ -400,14 +557,14 @@
     </div>
 
     <!-- Order History Section with Infinite Scroll -->
-   
-    <div class="d-flex align-items-center mb-3" style="gap: 12px;">
-    <input type="date" id="startDate" class="form-control" style="width: 180px;" />
-    <input type="date" id="endDate" class="form-control" style="width: 180px;" />
 
-    <button id="btnFilter" class="btn btn-primary">Filter</button>
-    <button id="btnClear" class="btn btn-secondary">Clear</button>
-</div>
+    <div class="d-flex align-items-center mb-3" style="gap: 12px;">
+        <input type="date" id="startDate" class="form-control" style="width: 180px;" />
+        <input type="date" id="endDate" class="form-control" style="width: 180px;" />
+
+        <button id="btnFilter" class="btn btn-primary">Filter</button>
+        <button id="btnClear" class="btn btn-secondary">Clear</button>
+    </div>
 
 
     <div class="table-container" id="tableContainer">
@@ -475,16 +632,19 @@
     let allOrdersData = [];
     let filteredOrdersData = []; // Store filtered results
 
+
+
+
     $(document).ready(function () {
         initializeCoffeeUI();
 
-        // Set today's date as default
+        
         setTodayDate();
 
-        // Load today's orders by default
+        
         loadOrderHistory(true);
 
-        // Refresh every 5 seconds
+        
         setInterval(function(){
             loadOrderHistory(true);
         }, 5000);
@@ -497,18 +657,18 @@
             toggleCoffeeAvailability(isCoffeeActive);
         });
 
-        // Filter button event
+        
         $('#btnFilter').on('click', function () {
             applyDateFilter();
         });
 
-        // Clear button event
+      
         $('#btnClear').on('click', function () {
             clearDateFilter();
         });
     });
 
-    // Set today's date in date inputs
+
     function setTodayDate() {
         const today = new Date();
         const dateString = today.toISOString().split('T')[0];
@@ -517,31 +677,33 @@
     }
 
     // Calculate and display revenue
-    function calculateRevenue(orders) {
+        function calculateRevenue(orders) {
         if (!orders || orders.length === 0) {
             $('#totalRevenue').text('₹0.00');
             $('#orderCount').text('0 Orders');
             return;
         }
 
-        // Group by order ID to count unique orders
-        const uniqueOrders = {};
-        let totalRevenue = 0;
+        let grouped = {};
 
-        orders.forEach(order => {
-            if (!uniqueOrders[order.orderId]) {
-                uniqueOrders[order.orderId] = true;
+       
+        orders.forEach(o => {
+            if (!grouped[o.orderId]) {
+                grouped[o.orderId] = Number(o.finalAmount) || 0;
             }
-            totalRevenue += (Number(order.price) || 0);
         });
 
-        const orderCount = Object.keys(uniqueOrders).length;
+        // Total revenue = sum of unique finalAmount values
+        const totalRevenue = Object.values(grouped).reduce((a, b) => a + b, 0);
+
+        // Unique order count
+        const orderCount = Object.keys(grouped).length;
 
         $('#totalRevenue').text(`₹${totalRevenue.toFixed(2)}`);
-        $('#orderCount').text(`${orderCount} Order${orderCount !== 1 ? 's' : ''}`);
+        $('#orderCount').text(`${orderCount} Orders`);
     }
 
-    // Update revenue date range text
+
     function updateRevenueDateRange(startDate, endDate) {
         const start = new Date(startDate);
         const end = new Date(endDate);
@@ -560,7 +722,7 @@
         }
     }
 
-    // Apply date filter
+    
     function applyDateFilter() {
         const start = $('#startDate').val();
         const end = $('#endDate').val();
@@ -591,7 +753,7 @@
         updateRevenueDateRange(start, end);
         calculateRevenue(filteredOrdersData);
 
-        // Reset pagination and display filtered results
+        
         currentPage = 1;
         hasMoreData = true;
         $('#orderHistoryTable tbody').empty();
@@ -600,7 +762,6 @@
         displayOrdersPage(filteredOrdersData);
     }
 
-    // Clear filter and show today's orders
     function clearDateFilter() {
         setTodayDate();
         applyDateFilter();
@@ -692,7 +853,6 @@
             success: function (data) {
                 allOrdersData = data || [];
 
-                // Apply today's filter by default
                 const start = $('#startDate').val();
                 const end = $('#endDate').val();
 
@@ -740,7 +900,8 @@
         displayOrdersPage(filteredOrdersData);
     }
 
-    function displayOrdersPage(dataToDisplay = filteredOrdersData) {
+        function displayOrdersPage(dataToDisplay = filteredOrdersData) {
+
         if (!dataToDisplay || dataToDisplay.length === 0) {
             if (currentPage === 1) {
                 $('#orderHistoryTable tbody').html(`
@@ -752,7 +913,6 @@
             return;
         }
 
-        // Group orders by orderId
         const groupedOrders = {};
         dataToDisplay.forEach(order => {
             if (!groupedOrders[order.orderId]) {
@@ -761,60 +921,67 @@
             groupedOrders[order.orderId].push(order);
         });
 
-        // Sort order IDs in descending order (newest first)
-        const sortedOrderIds = Object.keys(groupedOrders).sort((a, b) => b - a);
+       
+        const sortedOrderIds = Object.keys(groupedOrders).sort((a, b) => b.localeCompare(a));
 
-        // Calculate pagination
+       
         const startIndex = (currentPage - 1) * pageSize;
         const endIndex = startIndex + pageSize;
-        const ordersToDisplay = sortedOrderIds.slice(startIndex, endIndex);
+        const pageOrderIds = sortedOrderIds.slice(startIndex, endIndex);
 
-        // Check if we have more data
-        if (endIndex >= sortedOrderIds.length) {
-            hasMoreData = false;
-            $('#noMoreData').addClass('active');
-        }
+        const tbody = $('#orderHistoryTable tbody');
 
-        if (ordersToDisplay.length === 0) {
+        if (pageOrderIds.length === 0) {
             hasMoreData = false;
             $('#noMoreData').addClass('active');
             return;
         }
 
-        const tbody = $('#orderHistoryTable tbody');
+    
+        pageOrderIds.forEach(orderId => {
 
-        ordersToDisplay.forEach(orderId => {
+            
             const orders = groupedOrders[orderId];
-            const firstOrder = orders[0];
-            const totalItems = orders.length;
-            const totalAmount = orders.reduce((sum, order) => sum + (Number(order.price) || 0), 0);
-            const date = new Date(firstOrder.date).toLocaleString('en-IN');
+            const first = orders[0];
 
-            const ordersJsonEncoded = encodeURIComponent(JSON.stringify(orders));
-          
+            const totalAmount = orders.reduce((sum, o) => sum + (Number(o.price) || 0), 0);
+            const totalItems = orders.length;
+
+            const date = new Date(first.date).toLocaleString('en-IN');
+
             const row = `
                 <tr class="table-success">
-                    <td><strong>${firstOrder.orderId}</strong></td>
-                    <td>${firstOrder.customerName || 'N/A'}</td>
-                    <td>${firstOrder.phone || 'N/A'}</td>
-                    <td>Table ${firstOrder.tableNo || 'N/A'}</td>
-                    <td style="max-width: 200px; overflow-wrap: break-word;">${firstOrder.itemName || 'N/A'}</td>
-                    <td><strong>₹${totalAmount.toFixed(2)}</strong></td>
+                    <td><strong>${first.orderId}</strong></td>
+                    <td>${first.customerName || 'N/A'}</td>
+                    <td>${first.phone || 'N/A'}</td>
+                    <td>${first.tableNo ? 'Table ' + first.tableNo : 'N/A'}</td>
+                    <td style="max-width:200px;">${first.itemName || 'N/A'}</td>
+                    <td><strong>₹${first.finalAmount.toFixed(2)}</strong></td>
                     <td>${totalItems}</td>
-                    <td>${firstOrder.paymentMode || 'N/A'}</td>
-                    <td style="white-space: nowrap;">${date}</td>
+                    <td>${first.paymentMode || 'N/A'}</td>
+                    <td>${date}</td>
                     <td>
-                        <button class="btn btn-sm btn-info btn-view-order" data-orders="${ordersJsonEncoded}">
-                            <i class="fas fa-eye"></i> View
+                        <button
+                            class="btn btn-sm btn-info btn-view-bill"
+                            data-order-id="${first.orderId}">
+                            <i class="fas fa-eye"></i> View Bill
                         </button>
                     </td>
                 </tr>
             `;
+
             tbody.append(row);
         });
+
+       
+        if (endIndex >= sortedOrderIds.length) {
+            hasMoreData = false;
+            $('#noMoreData').addClass('active');
+        }
     }
 
-    // Keep all your existing functions for viewing orders, printing, etc.
+
+  
     $(document).on('click', '.btn-view-order', function () {
         const encoded = $(this).attr('data-orders');
         if (!encoded) {
@@ -864,9 +1031,9 @@
             `;
         });
 
-        
         const subtotal = totalAmount ;
-
+            const discount = Number(firstOrder.discount) || 0;
+         const finalTotal = subtotal - discount;
             const billHtml = `
     <div class="bill" id="printable-bill" style="font-family: Arial; width:260px;">
 
@@ -943,6 +1110,101 @@
             closeBillModal();
         }
     });
+
+
+
+        function buildBillUI(billData) {
+
+        if (!billData || billData.length === 0) {
+            alert("No bill found.");
+            return;
+        }
+
+        const summary = billData[0];
+        const items = billData;
+
+        let itemsHtml = "";
+        let totalItems = 0;
+
+        items.forEach((item, i) => {
+            const full = Number(item.fullPortion) || 0;
+            const half = Number(item.halfPortion) || 0;
+            const price = Number(item.price) || 0;
+
+            totalItems += (full + half);
+
+            itemsHtml += `
+                <div class="bill-item">
+                    <span>${i + 1}. ${item.itemName} (${full} Full, ${half} Half)</span>
+                    <span>₹${price.toFixed(2)}</span>
+                </div>
+            `;
+        });
+
+        const totalAmount = Number(summary.totalAmount) || 0;
+        const discount = Number(summary.discountAmount) || 0;
+        const finalAmount = Number(summary.finalAmount) || 0;
+
+        const html = `
+            <div class="bill" id="printable-bill">
+
+                <div class="bill-header">
+                    <div class="restaurant-name">Grill N Shakes</div>
+                    <div class="restaurant-info">Ulwe, Navi Mumbai</div>
+                    <div class="restaurant-info">📞 +91 XX-XXXX-XXXX</div>
+                </div>
+
+                <div class="bill-details">
+                    <div class="bill-row"><strong>Order ID:</strong> <span>${summary.orderId}</span></div>
+                    <div class="bill-row"><strong>Date:</strong> <span>${new Date(summary.createdDate).toLocaleString()}</span></div>
+                    <div class="bill-row"><strong>Name:</strong> <span>${summary.customerName}</span></div>
+                    <div class="bill-row"><strong>Phone:</strong> <span>${summary.phone}</span></div>
+                    <div class="bill-row"><strong>Payment:</strong> <span>${summary.paymentMode}</span></div>
+                </div>
+
+                <div class="bill-items">
+                    <h4 style="margin-bottom:10px;">Items (${totalItems})</h4>
+                    ${itemsHtml}
+                </div>
+
+                <div class="bill-total">
+                    <div class="bill-row"><span>Total Amount:</span> <span>₹${totalAmount.toFixed(2)}</span></div>
+                    <div class="bill-row"><span>Discount:</span> <span>₹${discount.toFixed(2)}</span></div>
+                    <div class="bill-row" style="font-size:18px">
+                        <strong>Final Amount:</strong>
+                        <strong>₹${finalAmount.toFixed(2)}</strong>
+                    </div>
+                </div>
+
+                <div class="bill-footer">
+                    Thank you! Visit Again.
+                </div>
+
+            </div>
+        `;
+
+        $("#bill-content").html(html);
+        $("#bill-modal").fadeIn(300);
+    }
+
+
+
+
+        $(document).on('click', '.btn-view-bill', function () {
+        const orderId = $(this).attr('data-order-id');
+
+        $.ajax({
+            url: `/Home/GetBillData?orderId=${orderId}`,
+            method: "GET",
+            success: function (billResponse) {
+                buildBillUI(billResponse);
+            },
+            error: function () {
+                alert("Failed to load bill.");
+            }
+        });
+    });
+
 
     $(document).keyup(function(e) {
         if (e.key === "Escape") {

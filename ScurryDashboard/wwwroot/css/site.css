@@ -52,7 +52,33 @@
         font-size: 1.1rem;
     }
 }
+@keyframes spinner-border {
+    to {
+        transform: rotate(360deg);
+    }
+}
+@media print {
+    body * {
+        visibility: hidden;
+    }
 
+    #printable-bill, #printable-bill * {
+        visibility: visible;
+    }
+
+    #printable-bill {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+
+    #bill-modal .modal-header,
+    .btn-print,
+    .btn-view {
+        display: none !important;
+    }
+}
 /* Add at the end of your site.css for best effect */
 .qty-group {
     flex-wrap: nowrap !important;
