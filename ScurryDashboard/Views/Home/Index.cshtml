@@ -376,7 +376,7 @@
         }
 
         /* FIX: Number input not typing */
-        input[type="number"] {
+        /* input[type="number"] {
             -webkit-appearance: none !important;
             appearance: none !important;
             overflow: visible !important;
@@ -386,7 +386,18 @@
         input::-webkit-outer-spin-button {
             -webkit-appearance: none !important;
             margin: 0 !important;
+        } */
+        /* Hide only spinner arrows safely */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: auto;
+            margin: 0;
         }
+
+        input[type="number"] {
+            -moz-appearance: textfield; /* Firefox */
+        }
+
 
         /* Buttons */
         .payment-modal-actions {
@@ -523,6 +534,7 @@
                 <input type="number"
                        id="discountInput"
                        placeholder="Enter discount amount"
+                       inputmode="numeric"
                        min="0"  style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
             </div>
 
