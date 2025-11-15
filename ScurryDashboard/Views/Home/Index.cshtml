@@ -293,7 +293,7 @@
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 9999;
+            z-index:2;
         }
 
             #paymentModal.payment-modal-overlay.active {
@@ -307,6 +307,7 @@
             border-radius: 10px;
             animation: modalPop 0.25s ease-out;
             box-shadow: 0px 4px 20px rgba(0,0,0,0.15);
+            z-index: 3;
         }
 
         @@keyframes modalPop {
@@ -373,21 +374,19 @@
             margin-top: 5px;
             background: #fff;
             box-sizing: border-box;
+            z-index: 2000;
         }
 
         /* FIX: Number input not typing */
         input[type="number"] {
-            -webkit-appearance: none !important;
-            appearance: none !important;
-            overflow: visible !important;
+            -moz-appearance: textfield;
         }
 
-        input::-webkit-inner-spin-button,
-        input::-webkit-outer-spin-button {
-            -webkit-appearance: none !important;
-            margin: 0 !important;
-        }
-
+            input[type="number"]::-webkit-inner-spin-button,
+            input[type="number"]::-webkit-outer-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+            }
         /* Buttons */
         .payment-modal-actions {
             margin-top: 25px;
@@ -491,6 +490,7 @@
             </div>
         </div>
     </div>
+    
 
     <!-- Payment Modal -->
     <div id="paymentModal" class="payment-modal-overlay">
@@ -516,15 +516,21 @@
             </div>
 
             <!-- DISCOUNT SECTION -->
-            <div style="margin: 20px 0; text-align: left;">
-                <label for="discountInput" style="font-weight:600; font-size:14px; display:block; margin-bottom:5px;">
+             <div style="margin: 20px 0; text-align: left;">
+                 <label  for="discountInput" style="font-weight:600; font-size:14px; display:block; margin-bottom:5px;">
                     Discount (₹):
-                </label>
-                <input type="number"
+                </label>  
+                 <input type="text"
                        id="discountInput"
                        placeholder="Enter discount amount"
-                       min="0"  style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
-            </div>
+                      
+                       min="0" style="width: 100%; padding: 10px; border: 1px solid #ccc;
+                  border-radius: 4px; font-size: 14px; background:white;
+                  position:relative;"> 
+           
+            </div> 
+
+           
 
             <!-- ERROR MESSAGE -->
             <div class="payment-error" id="paymentError">

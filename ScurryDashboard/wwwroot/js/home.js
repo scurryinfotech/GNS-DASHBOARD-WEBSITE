@@ -208,12 +208,12 @@ function stopAllBeeps() {
 
 
 $(document).ready(function () {
-
-
+    loadTableOrders(false);
+    
     setInterval(function () {
         loadTableOrders(false);
         
-    }, 3000);
+    }, 30000);
     loadTableCount();
 
     renderOrders();

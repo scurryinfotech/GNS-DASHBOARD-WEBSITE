@@ -267,7 +267,7 @@ namespace ScurryDashboard.Controllers
         }
 
         [HttpGet]
-        public IActionResult Login()
+        public IActionResult Home()
         {
             return View();
         }
