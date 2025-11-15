@@ -5,22 +5,25 @@
 @section styles {
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <style>
-        /* Bill Modal Styles */
+        /* ---------------------------------------------------
+           BILL MODAL (FIXED + CLEANED)
+        ---------------------------------------------------- */
         #bill-modal {
-            display: none;
+            display: none; /* Must be hide initially (no !important) */
             position: fixed;
-            z-index: 9999;
+            z-index: 50000; /* Above everything */
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
-            overflow: auto;
+            overflow-y: auto;
             background-color: rgba(0,0,0,0.7);
+            padding-top: 40px;
         }
 
             #bill-modal .modal-content {
                 background-color: #fefefe;
-                margin: 2% auto;
+                margin: auto;
                 padding: 0;
                 border: 1px solid #888;
                 width: 90%;
@@ -33,10 +36,10 @@
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                 color: white;
                 padding: 20px;
-                border-radius: 10px 10px 0 0;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+                border-radius: 10px 10px 0 0;
             }
 
             #bill-modal .modal-title {
@@ -67,14 +70,12 @@
             padding: 20px;
             max-height: 70vh;
             overflow-y: auto;
-        }
-
-        #bill-content {
             display: flex;
             justify-content: center;
             align-items: flex-start;
         }
 
+        /* Bill Styling */
         .bill {
             font-family: 'Courier New', monospace;
             background: white;
@@ -92,14 +93,12 @@
         .restaurant-name {
             font-size: 28px;
             font-weight: bold;
-            margin-bottom: 10px;
             color: #333;
         }
 
         .restaurant-info {
             font-size: 14px;
             color: #666;
-            margin: 5px 0;
         }
 
         .bill-details {
@@ -112,22 +111,20 @@
         .bill-row {
             display: flex;
             justify-content: space-between;
-            margin: 8px 0;
-            padding: 5px 0;
+            padding: 6px 0;
         }
 
         .bill-items {
-            margin: 20px 0;
+            margin-top: 20px;
             padding: 15px;
-            background: #fff;
-            border: 1px solid #ddd;
             border-radius: 5px;
+            border: 1px solid #ddd;
         }
 
         .bill-item {
             display: flex;
             justify-content: space-between;
-            padding: 10px 0;
+            padding: 8px 0;
             border-bottom: 1px solid #eee;
         }
 
@@ -147,142 +144,38 @@
             text-align: center;
             padding-top: 20px;
             border-top: 2px dashed #333;
-            margin-top: 20px;
             color: #666;
         }
 
+        /* Bill Buttons */
         .btn-print, .btn-view {
             padding: 12px 30px;
             font-size: 16px;
             border: none;
-            border-radius: 5px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.3s;
+            margin: 10px;
             font-weight: bold;
         }
 
         .btn-print {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
         }
-
-            .btn-print:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-            }
 
         .btn-view {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, #f093fb, #f5576c);
             color: white;
         }
 
+            .btn-print:hover,
             .btn-view:hover {
                 transform: translateY(-2px);
-                box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
             }
 
-        /* Infinite Scroll Styles */
-        .table-container {
-            position: relative;
-            max-height: 600px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-        }
-
-            .table-container::-webkit-scrollbar {
-                width: 10px;
-            }
-
-            .table-container::-webkit-scrollbar-track {
-                background: #f1f1f1;
-                border-radius: 10px;
-            }
-
-            .table-container::-webkit-scrollbar-thumb {
-                background: #888;
-                border-radius: 10px;
-            }
-
-                .table-container::-webkit-scrollbar-thumb:hover {
-                    background: #555;
-                }
-
-        #orderHistoryTable {
-            margin-bottom: 0;
-        }
-
-            #orderHistoryTable thead th {
-                position: sticky;
-                top: 0;
-                background: #f8f9fa;
-                z-index: 10;
-                box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4);
-            }
-
-        .loading-spinner {
-            text-align: center;
-            padding: 20px;
-            display: none;
-        }
-
-            .loading-spinner.active {
-                display: block;
-            }
-
-        .spinner-border {
-            width: 2rem;
-            height: 2rem;
-            border: 0.25em solid currentColor;
-            border-right-color: transparent;
-            border-radius: 50%;
-            animation: spinner-border 0.75s linear infinite;
-        }
-
-        
-        .no-more-data {
-            text-align: center;
-            padding: 20px;
-            color: #6c757d;
-            font-style: italic;
-            display: none;
-        }
-
-            .no-more-data.active {
-                display: block;
-            }
-
-
-
-        /* FIX discount input not editable */
-        #paymentModal {
-            position: fixed !important;
-            z-index: 999999 !important;
-        }
-
-        .payment-modal {
-            position: relative !important;
-            z-index: 1000000 !important;
-        }
-
-
-        #bill-modal {
-            display: none !important;
-           
-        }
-
-        .loading-spinner {
-            pointer-events: none !important;
-        }
-
-        .table-container {
-            pointer-events: auto !important;
-        }
-
-        /* -------------------------
-           PAYMENT MODAL CLEAN STYLE
-        -------------------------- */
-
+        /* ---------------------------------------------------
+           PAYMENT MODAL (FIXED + NO CONFLICT)
+        ---------------------------------------------------- */
         #paymentModal.payment-modal-overlay {
             position: fixed;
             top: 0;
@@ -293,7 +186,7 @@
             display: none;
             align-items: center;
             justify-content: center;
-            z-index:2;
+            z-index: 40000; /* Lower than bill modal */
         }
 
             #paymentModal.payment-modal-overlay.active {
@@ -305,24 +198,7 @@
             width: 420px;
             padding: 25px;
             border-radius: 10px;
-            animation: modalPop 0.25s ease-out;
             box-shadow: 0px 4px 20px rgba(0,0,0,0.15);
-            z-index: 3;
-        }
-
-        @@keyframes modalPop {
-            from
-
-        {
-            transform: scale(0.85);
-            opacity: 0;
-        }
-
-        to {
-            transform: scale(1);
-            opacity: 1;
-        }
-
         }
 
         .payment-modal-header {
@@ -337,14 +213,14 @@
         }
 
         .payment-option {
-            border: 2px solid #ddd;
+            border: 2px solid #ccc;
             padding: 15px;
             text-align: center;
-            border-radius: 12px;
-            width: 48%;
             cursor: pointer;
-            transition: 0.2s;
+            width: 48%;
+            border-radius: 12px;
             background: #fafafa;
+            transition: 0.25s;
         }
 
             .payment-option:hover {
@@ -353,7 +229,7 @@
 
             .payment-option.selected {
                 border-color: #00aaff;
-                background: #e9f7ff;
+                background: #e7f5ff;
             }
 
         .payment-icon {
@@ -361,10 +237,7 @@
             margin-bottom: 8px;
         }
 
-        /* -------------------------
-           DISCOUNT INPUT FIX
-        -------------------------- */
-
+        /* Discount Input */
         #discountInput {
             width: 100%;
             padding: 10px 12px;
@@ -372,36 +245,10 @@
             border: 1px solid #ccc;
             font-size: 15px;
             margin-top: 5px;
-            background: #fff;
-            box-sizing: border-box;
-            z-index: 2000;
+            background: white;
         }
 
-        /* FIX: Number input not typing */
-        /* input[type="number"] {
-            -webkit-appearance: none !important;
-            appearance: none !important;
-            overflow: visible !important;
-        }
-
-        input::-webkit-inner-spin-button,
-        input::-webkit-outer-spin-button {
-            -webkit-appearance: none !important;
-            margin: 0 !important;
-        } */
-        /* Hide only spinner arrows safely */
-        input[type="number"]::-webkit-outer-spin-button,
-        input[type="number"]::-webkit-inner-spin-button {
-            -webkit-appearance: auto;
-            margin: 0;
-        }
-
-        input[type="number"] {
-            -moz-appearance: textfield; /* Firefox */
-        }
-
-
-        /* Buttons */
+        /* Payment Modal Buttons */
         .payment-modal-actions {
             margin-top: 25px;
             display: flex;
@@ -415,30 +262,74 @@
             border: none;
             cursor: pointer;
             font-size: 15px;
-            transition: 0.2s;
         }
 
         .payment-btn-cancel {
             background: #f1f1f1;
         }
 
-            .payment-btn-cancel:hover {
-                background: #e1e1e1;
-            }
-
         .payment-btn-confirm {
             background: #4CAF50;
-            color: #fff;
+            color: white;
         }
 
             .payment-btn-confirm:disabled {
-                opacity: 0.4;
-                cursor: not-allowed;
+                opacity: 0.5;
+            }
+
+        /* ---------------------------------------------------
+           TABLE + INFINITE SCROLL
+        ---------------------------------------------------- */
+        .table-container {
+            position: relative;
+            max-height: 600px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+            .table-container::-webkit-scrollbar {
+                width: 10px;
+            }
+
+            .table-container::-webkit-scrollbar-thumb {
+                background: #888;
+                border-radius: 10px;
+            }
+
+        #orderHistoryTable thead th {
+            position: sticky;
+            top: 0;
+            background: #f8f9fa;
+            z-index: 10;
+            box-shadow: 0 2px 2px -1px rgba(0,0,0,0.4);
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+            .loading-spinner.active {
+                display: block;
+            }
+
+        .no-more-data {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+
+            .no-more-data.active {
+                display: block;
             }
 
 
     </style>
-}
+
+    }
 
 <div class="container">
 
@@ -1103,7 +994,9 @@
 
 
         $('#bill-content').html(billHtml);
+        $('#bill-modal').addClass('active');
         $('#bill-modal').fadeIn(300);
+
     }
 
     function closeBillModal() {
