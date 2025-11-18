@@ -962,6 +962,7 @@ $(document).on('click', '.payment-option', function (e) {
 });
 
 $(document).on('click', '#cancelPayment', function () {
+
     closePaymentModal();
 });
 
@@ -975,9 +976,17 @@ $(document).on('click', '#confirmPayment', function () {
 
     const mode = selectedPaymentMode;
 
-    // Read discount value
-    const discount = parseInt($('#discountInput').val()) || 0;
+    $(document).on('focus', '#discountInput', function () {
+        $(this).attr('readonly', false);
+    });
 
+    // Read discount value
+    $(document).on('input', '#discountInput', function () {
+        let value = $(this).val();
+        // Remove non-numeric characters
+        value = value.replace(/[^0-9]/g, '');
+        $(this).val(value);
+    });
     // Collect item IDs
     const ids = (currentOrderData || []).map(x => {
         if (typeof x === 'object' && x !== null) return x.id;
@@ -1059,7 +1068,13 @@ $(document).on('click', '#paymentModal', function (e) {
     }
 });
 function openPaymentModal(orderId, orderData) {
-    
+
+     $('#divInProgressModal').modal('hide'); 
+    setTimeout(() => {
+        $('#paymentModal').addClass('active');
+        const d = document.getElementById("discountInput");
+        if (d) d.focus();
+    }, 250);
 
     currentOrderId = orderId;
     currentOrderData = [orderData.id];

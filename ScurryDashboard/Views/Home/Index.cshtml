@@ -5,13 +5,11 @@
 @section styles {
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <style>
-        /* ---------------------------------------------------
-           BILL MODAL (FIXED + CLEANED)
-        ---------------------------------------------------- */
+        
         #bill-modal {
-            display: none; /* Must be hide initially (no !important) */
+            display: none; 
             position: fixed;
-            z-index: 50000; /* Above everything */
+             /* Above everything */
             left: 0;
             top: 0;
             width: 100%;
@@ -172,10 +170,7 @@
             .btn-view:hover {
                 transform: translateY(-2px);
             }
-
-        /* ---------------------------------------------------
-           PAYMENT MODAL (FIXED + NO CONFLICT)
-        ---------------------------------------------------- */
+        /* Payment Modal Overlay (fixed and always on top) */
         #paymentModal.payment-modal-overlay {
             position: fixed;
             top: 0;
@@ -186,26 +181,33 @@
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 40000; /* Lower than bill modal */
+             
+            pointer-events: auto !important;
         }
 
             #paymentModal.payment-modal-overlay.active {
                 display: flex;
             }
 
+        /* Payment Modal Box */
         .payment-modal {
             background: #fff;
             width: 420px;
             padding: 25px;
             border-radius: 10px;
-            box-shadow: 0px 4px 20px rgba(0,0,0,0.15);
+            box-shadow: 0px 4px 20px rgba(0,0,0,0.30);
+            position: relative;
+           
+            pointer-events: auto !important;
         }
 
+        /* Header */
         .payment-modal-header {
             text-align: center;
             margin-bottom: 20px;
         }
 
+        /* Options */
         .payment-options {
             display: flex;
             justify-content: space-between;
@@ -232,21 +234,33 @@
                 background: #e7f5ff;
             }
 
-        .payment-icon {
-            font-size: 35px;
-            margin-bottom: 8px;
+        /* Discount Input Fix */
+        #discountInput {
+            width: 100% !important;
+            padding: 12px !important;
+            border-radius: 6px !important;
+            border: 1px solid #ccc !important;
+            font-size: 16px !important;
+            background: #fff !important;
+            position: relative !important;
+            z-index: 100 !important;
+            pointer-events: auto !important;
         }
 
-        /* Discount Input */
-        #discountInput {
-            width: 100%;
-            padding: 10px 12px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            font-size: 15px;
-            margin-top: 5px;
-            background: white;
+            #discountInput:focus {
+                outline: none !important;
+                border-color: #008cff !important;
+                box-shadow: 0 0 5px rgba(0,140,255,0.4) !important;
+            }
+
+        #paymentModal {
+            pointer-events: auto !important;
         }
+
+            #paymentModal * {
+                pointer-events: auto !important;
+            }
+
 
         /* Payment Modal Buttons */
         .payment-modal-actions {
@@ -277,55 +291,13 @@
                 opacity: 0.5;
             }
 
-        /* ---------------------------------------------------
-           TABLE + INFINITE SCROLL
-        ---------------------------------------------------- */
-        .table-container {
-            position: relative;
-            max-height: 600px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-        }
-
-            .table-container::-webkit-scrollbar {
-                width: 10px;
-            }
-
-            .table-container::-webkit-scrollbar-thumb {
-                background: #888;
-                border-radius: 10px;
-            }
-
-        #orderHistoryTable thead th {
-            position: sticky;
-            top: 0;
-            background: #f8f9fa;
-            z-index: 10;
-            box-shadow: 0 2px 2px -1px rgba(0,0,0,0.4);
-        }
-
-        .loading-spinner {
+        /* Error Message */
+        .payment-error {
             display: none;
-            text-align: center;
-            padding: 20px;
+            margin-top: 10px;
+            color: red;
+            font-size: 14px;
         }
-
-            .loading-spinner.active {
-                display: block;
-            }
-
-        .no-more-data {
-            display: none;
-            text-align: center;
-            padding: 20px;
-            color: #6c757d;
-        }
-
-            .no-more-data.active {
-                display: block;
-            }
-
 
     </style>
 
@@ -397,7 +369,7 @@
     </div>
     
 
-    <!-- Payment Modal -->
+    <!--Payment Modal -->
     <div id="paymentModal" class="payment-modal-overlay">
         <div class="payment-modal">
             <div class="payment-modal-header">
@@ -421,18 +393,16 @@
             </div>
 
             <!-- DISCOUNT SECTION -->
-             <div style="margin: 20px 0; text-align: left;">
-                 <label  for="discountInput" style="font-weight:600; font-size:14px; display:block; margin-bottom:5px;">
+            <div style="margin: 20px 0; text-align: left;">
+                <label for="discountInput" style="font-weight:600; font-size:14px; display:block; margin-bottom:5px;">
                     Discount (₹):
-                </label>  
-                 <input type="text"
+                </label>
+                <input type="number"
                        id="discountInput"
                        placeholder="Enter discount amount"
                        inputmode="numeric"
-                       min="0"  style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+                       min="0">
             </div>
-
-           
 
             <!-- ERROR MESSAGE -->
             <div class="payment-error" id="paymentError">
@@ -448,6 +418,7 @@
             </div>
         </div>
     </div>
+
 
 
     <!-- Revenue Display Section -->
@@ -544,6 +515,11 @@
 
 
     $(document).ready(function () {
+
+        if ($.fn.modal && $.fn.modal.Constructor) {
+        $.fn.modal.Constructor.prototype._enforceFocus = function() {};
+    }
+
         initializeCoffeeUI();
 
         
@@ -1121,4 +1097,5 @@
             closeBillModal();
         }
     });
+
 </script> 
