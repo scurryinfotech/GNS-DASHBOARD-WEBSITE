@@ -241,6 +241,8 @@ $(document).ready(function () {
 
 
     $(document).on('click', '#confirmOrderBtn', function () {
+        
+
         const $btn = $(this);
         const tableTitle = $('.modal-title').text();
         const tableNo = parseInt(tableTitle.replace('Table', ''));
@@ -442,7 +444,7 @@ function loadTableOrders() {
                                         beepTables[order.tableNo] = audio;
                                     }).catch(err => console.error('Reminder beep error:', err));
                                 } catch (err) {
-                                    console.error('Reminder beep creation error:', err);
+                                    
                                 }
                             }
                             // Set next reminder in 5 minutes
@@ -967,7 +969,7 @@ $(document).on('click', '#cancelPayment', function () {
 });
 
 
-$(document).on('click', '#confirmPayment', function () {
+$(document).off('click', '#confirmPayment').on('click', '#confirmPayment', function () {
 
     if (!selectedPaymentMode) {
         $('#paymentError').addClass('active');
@@ -976,17 +978,19 @@ $(document).on('click', '#confirmPayment', function () {
 
     const mode = selectedPaymentMode;
 
+    // Ensure discount input becomes editable once focused (keep one-time binding outside if needed)
     $(document).on('focus', '#discountInput', function () {
         $(this).attr('readonly', false);
     });
 
-    // Read discount value
+    // Read discount value safely (one-time binding is fine, but keep robust parsing here)
     $(document).on('input', '#discountInput', function () {
         let value = $(this).val();
         // Remove non-numeric characters
         value = value.replace(/[^0-9]/g, '');
         $(this).val(value);
     });
+
     // Collect item IDs
     const ids = (currentOrderData || []).map(x => {
         if (typeof x === 'object' && x !== null) return x.id;
@@ -1001,27 +1005,47 @@ $(document).on('click', '#confirmPayment', function () {
     if (!confirm('Are you sure you want to complete this order?')) {
         return;
     }
+    
 
     $('#confirmPayment').prop('disabled', true);
 
-   
     closePaymentModal();
 
     const ordersToComplete = ids
         .map(id => (window.liveOrdersData || []).find(o => o.id === id))
         .filter(o => o);
 
+    if (ordersToComplete.length === 0) {
+        showSuccessMessage('No matching live orders found to complete!');
+        $('#confirmPayment').prop('disabled', false);
+        return;
+    }
+
+    // Calculate totals
     let totalAmount = ordersToComplete.reduce((sum, item) => {
         let qty = Number(item.halfPortion) + Number(item.fullPortion);
         return sum + (qty * Number(item.price));
     }, 0);
 
+    let discount = 0;
+    const discountEl = $('#discountInput');
+    if (discountEl && discountEl.length) {
+        const raw = discountEl.val() ?? '';
+        const parsed = parseInt(String(raw).replace(/[^0-9]/g, ''), 10);
+        discount = isNaN(parsed) ? 0 : parsed;
+    }
+    if (discount < 0) discount = 0;
+    if (discount > totalAmount) {
+        discount = totalAmount;
+        
+        if (discountEl && discountEl.length) discountEl.val(String(discount));
+        showSuccessMessage('Discount reduced to total amount.');
+    }
+
     let finalAmount = totalAmount - discount;
+    if (finalAmount < 0) finalAmount = 0;
 
-    
     let first = ordersToComplete[0];
-
-    
 
     let summaryData = {
         OrderId: first.orderId,
@@ -1032,7 +1056,6 @@ $(document).on('click', '#confirmPayment', function () {
         FinalAmount: finalAmount
     };
 
-    
     $.ajax({
         url: '/home/SaveOrderSummary',
         type: 'POST',
@@ -1040,7 +1063,6 @@ $(document).on('click', '#confirmPayment', function () {
         data: JSON.stringify(summaryData),
         success: function () {
 
-           
             ordersToComplete.forEach(order => {
                 if (order) {
                     order.paymentMode = mode;
@@ -1051,9 +1073,12 @@ $(document).on('click', '#confirmPayment', function () {
                 }
             });
 
+            $('#confirmPayment').prop('disabled', false);
         },
-        error: function () {
+        error: function (xhr, status, err) {
+            
             showSuccessMessage('Error saving summary!');
+            $('#confirmPayment').prop('disabled', false);
         }
     });
 
@@ -1225,7 +1250,7 @@ function acceptOrder(order, callback) {
 
 // Complete order (change status to Completed and move to history) - ENHANCED with cleanup
 function completeOrder(order, callback) {
-
+    
     
 
     stopBeep();
@@ -1956,7 +1981,7 @@ function rejectOrder(orderId) {
                
             },
             error: function (xhr, status, error) {
-                console.error('Failed to reject order on backend:', error);
+                
             }
         });
     }

@@ -51,7 +51,7 @@ namespace ScurryDashboard.Controllers
         public async Task<IActionResult> GetTableCount()
         {
             var client = _httpClientFactory.CreateClient();
-            var apiUrl = "https://localhost:7104/api/Order/GetTableCount?UserName=Grill_N_Shakes";
+            var apiUrl = "http://115.187.17.90:84/api/Order/GetTableCount?UserName=Grill_N_Shakes";
             string jwtToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkdyaWxsX05fU2hha2VzIiwibmJmIjoxNzYxOTEzOTIyLCJleHAiOjE3Njk2ODk5MjIsImlhdCI6MTc2MTkxMzkyMn0.03UaoHr4_jBpuAwCNacnteOxmt47aiiJdCilQsRihbs";
 
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
@@ -75,7 +75,7 @@ namespace ScurryDashboard.Controllers
         public async Task<IActionResult> SoftDeleteOrder([FromBody] int id)
         {
             var client = _httpClientFactory.CreateClient();
-            var apiUrl = $"https://localhost:7104/api/Order/SoftDeleteOrder?UserName=Grill_N_Shakes";
+            var apiUrl = $"http://115.187.17.90:84/api/Order/SoftDeleteOrder?UserName=Grill_N_Shakes";
             string jwtToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkdyaWxsX05fU2hha2VzIiwibmJmIjoxNzYxOTEzOTIyLCJleHAiOjE3Njk2ODk5MjIsImlhdCI6MTc2MTkxMzkyMn0.03UaoHr4_jBpuAwCNacnteOxmt47aiiJdCilQsRihbs";
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
 
@@ -93,7 +93,7 @@ namespace ScurryDashboard.Controllers
         public async Task<IActionResult> UpdateOrderItem([FromBody] OrderListModel updatedOrder)
         {
             var client = _httpClientFactory.CreateClient();
-            var apiUrl = $"https://localhost:7104/api/Order/UpdateOrderItem?UserName=Grill_N_Shakes";
+            var apiUrl = $"http://115.187.17.90:84/api/Order/UpdateOrderItem?UserName=Grill_N_Shakes";
             string jwtToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkdyaWxsX05fU2hha2VzIiwibmJmIjoxNzYxOTEzOTIyLCJleHAiOjE3Njk2ODk5MjIsImlhdCI6MTc2MTkxMzkyMn0.03UaoHr4_jBpuAwCNacnteOxmt47aiiJdCilQsRihbs";
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
 
@@ -114,7 +114,7 @@ namespace ScurryDashboard.Controllers
             {
                 var client = _httpClientFactory.CreateClient();
 
-                var apiUrl = "https://localhost:7104/api/Order/SaveOrderSummary";
+                var apiUrl = "http://115.187.17.90:84/api/Order/SaveOrderSummary";
                 var json = JsonSerializer.Serialize(summary);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -176,7 +176,7 @@ namespace ScurryDashboard.Controllers
         {
             var client = _httpClientFactory.CreateClient();
             var response = await client.GetAsync(
-                $"https://localhost:7104/api/Order/GetBillByOrderId?orderId={orderId}"
+                $"http://115.187.17.90:84/api/Order/GetBillByOrderId?orderId={orderId}"
             );
 
             string json = await response.Content.ReadAsStringAsync();
@@ -195,7 +195,7 @@ namespace ScurryDashboard.Controllers
                 return BadRequest("Username and password are required.");
 
             var client = _httpClientFactory.CreateClient();
-            var apiUrl = "https://localhost:7104/api/Order/Login"; // Change to your actual API endpoint
+            var apiUrl = "http://115.187.17.90:84/api/Order/Login"; // Change to your actual API endpoint
 
             var json = JsonSerializer.Serialize(user);
             var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
@@ -234,7 +234,7 @@ namespace ScurryDashboard.Controllers
                 return BadRequest("Username and password are required.");
 
             var client = _httpClientFactory.CreateClient();
-            var apiUrl = "https://localhost:7104/api/Order/AddUser";
+            var apiUrl = "http://115.187.17.90:84/api/Order/AddUser";
             string jwtToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkdyaWxsX05fU2hha2VzIiwibmJmIjoxNzYxOTEzOTIyLCJleHAiOjE3Njk2ODk5MjIsImlhdCI6MTc2MTkxMzkyMn0.03UaoHr4_jBpuAwCNacnteOxmt47aiiJdCilQsRihbs";
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
             var json = JsonSerializer.Serialize(user);
@@ -305,7 +305,7 @@ namespace ScurryDashboard.Controllers
         public async Task<IActionResult> GetOrderOnline()
         {
             var client = _httpClientFactory.CreateClient();
-            var apiUrl = "https://localhost:7104/api/Order/GetOrderOnline?UserName=Grill_N_Shakes";
+            var apiUrl = "http://115.187.17.90:84/api/Order/GetOrderOnline?UserName=Grill_N_Shakes";
             string jwtToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkdyaWxsX05fU2hha2VzIiwibmJmIjoxNzYxOTEzOTIyLCJleHAiOjE3Njk2ODk5MjIsImlhdCI6MTc2MTkxMzkyMn0.03UaoHr4_jBpuAwCNacnteOxmt47aiiJdCilQsRihbs";
 
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
@@ -331,7 +331,7 @@ namespace ScurryDashboard.Controllers
         {
             var client = _httpClientFactory.CreateClient();
 
-            var apiUrl = $"https://localhost:7104/api/Order/UpdateOrderStatus";
+            var apiUrl = $"http://115.187.17.90:84/api/Order/UpdateOrderStatus";
             string jwtToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkdyaWxsX05fU2hha2VzIiwibmJmIjoxNzYxOTEzOTIyLCJleHAiOjE3Njk2ODk5MjIsImlhdCI6MTc2MTkxMzkyMn0.03UaoHr4_jBpuAwCNacnteOxmt47aiiJdCilQsRihbs";
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
 
@@ -354,7 +354,7 @@ namespace ScurryDashboard.Controllers
         public async Task<IActionResult> SetAvailability([FromBody] bool isAvailable)
         {
             var client = _httpClientFactory.CreateClient();
-            var apiUrl = "https://localhost:7104/api/Order/SetAvailability";
+            var apiUrl = "http://115.187.17.90:84/api/Order/SetAvailability";
 
             string jwtToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkdyaWxsX05fU2hha2VzIiwibmJmIjoxNzYxOTEzOTIyLCJleHAiOjE3Njk2ODk5MjIsImlhdCI6MTc2MTkxMzkyMn0.03UaoHr4_jBpuAwCNacnteOxmt47aiiJdCilQsRihbs";
 
@@ -390,7 +390,7 @@ namespace ScurryDashboard.Controllers
         {
             var client = _httpClientFactory.CreateClient();
             
-            var apiUrl = "https://localhost:7104/api/Order/GetAvailability?UserName=Grill_N_Shakes";
+            var apiUrl = "http://115.187.17.90:84/api/Order/GetAvailability?UserName=Grill_N_Shakes";
 
             string jwtToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkdyaWxsX05fU2hha2VzIiwibmJmIjoxNzYxOTEzOTIyLCJleHAiOjE3Njk2ODk5MjIsImlhdCI6MTc2MTkxMzkyMn0.03UaoHr4_jBpuAwCNacnteOxmt47aiiJdCilQsRihbs";
             client.DefaultRequestHeaders.Authorization =
@@ -438,7 +438,7 @@ namespace ScurryDashboard.Controllers
         public async Task<IActionResult> GetCoffeeOrders()
         {
             var client = _httpClientFactory.CreateClient();
-            var apiUrl = $"https://localhost:7104/api/Order/CoffeeOrdersDetails?username=Grill_N_Shakes";
+            var apiUrl = $"http://115.187.17.90:84/api/Order/CoffeeOrdersDetails?username=Grill_N_Shakes";
 
             string jwtToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkdyaWxsX05fU2hha2VzIiwibmJmIjoxNzYxOTEzOTIyLCJleHAiOjE3Njk2ODk5MjIsImlhdCI6MTc2MTkxMzkyMn0.03UaoHr4_jBpuAwCNacnteOxmt47aiiJdCilQsRihbs";
 
@@ -479,7 +479,7 @@ namespace ScurryDashboard.Controllers
         public async Task<IActionResult> UpdateCoffeeOrderStatus([FromBody] updateCoffeeDetails updatedCoffeeOrder)
         {
             var client = _httpClientFactory.CreateClient();
-            var apiUrl = $"https://localhost:7104/api/Order/UpdateCoffeeOrder?UserName=Grill_N_Shakes";
+            var apiUrl = $"http://115.187.17.90:84/api/Order/UpdateCoffeeOrder?UserName=Grill_N_Shakes";
             string jwtToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkdyaWxsX05fU2hha2VzIiwibmJmIjoxNzYxOTEzOTIyLCJleHAiOjE3Njk2ODk5MjIsImlhdCI6MTc2MTkxMzkyMn0.03UaoHr4_jBpuAwCNacnteOxmt47aiiJdCilQsRihbs";
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
 

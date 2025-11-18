@@ -315,8 +315,8 @@
         <div class="section-title">
             <span>📊</span> Live Orders Dashboard
             <div class="position-relative ml-auto">
-                <i class="fas fa-bell text-warning" style="font-size: 1.2rem;"></i>
-                <span class="notification-badge" id="newOrdersBadge">0</span>
+                @* <i class="fas fa-bell text-warning" style="font-size: 1.2rem;"></i>
+                <span class="notification-badge" id="newOrdersBadge">0</span> *@
             </div>
         </div>
 
@@ -330,8 +330,8 @@
         <div class="section-title">
             <span>🍽️</span> Table Management
             <div class="position-relative ml-auto">
-                <i class="fas fa-bell text-warning" style="font-size: 1.2rem;"></i>
-                <span class="notification-badge" id="newOrdersBadge">3</span>
+                @* <i class="fas fa-bell text-warning" style="font-size: 1.2rem;"></i>
+                <span class="notification-badge" id="newOrdersBadge">3</span> *@
             </div>
         </div>
         <div id="divTable"></div>
@@ -723,6 +723,7 @@
     }
 
     function loadOrderHistory(isInitial = false) {
+        
         if (isInitial) {
             currentPage = 1;
             hasMoreData = true;
@@ -736,6 +737,7 @@
             type: 'GET',
             success: function (data) {
                 allOrdersData = data || [];
+                debugger
 
                 const start = $('#startDate').val();
                 const end = $('#endDate').val();
@@ -925,7 +927,7 @@
         <div style="text-align:center; border-bottom:1px dashed #000; padding-bottom:6px;">
             <div style="font-size:18px; font-weight:bold;">Grill N Shakes</div>
             <div style="font-size:11px;">123 Restaurant Street, Ulwe</div>
-            <div style="font-size:11px;">📞 +91-XXXX-XXXXXX</div>
+            <div style="font-size:11px;">📞 +918928484618</div>
         </div>
 
         <!-- Order Details -->
@@ -1037,7 +1039,7 @@
                 <div class="bill-header">
                     <div class="restaurant-name">Grill N Shakes</div>
                     <div class="restaurant-info">Ulwe, Navi Mumbai</div>
-                    <div class="restaurant-info">📞 +91 XX-XXXX-XXXX</div>
+                    <div class="restaurant-info">📞 +91 918928484618</div>
                 </div>
 
                 <div class="bill-details">
